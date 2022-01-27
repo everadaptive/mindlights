@@ -1,0 +1,6 @@
+https://angrytools.com/gradient/
+
+cmd to generate a new palette
+rm /tmp/p; for i in {0..600..6}; do color=$(convert gradient_img.png[1x1+$i+10] -format "%[fx:int(255*r)],%[fx:int(255*g)],%[fx:int(255*b)]"  info:); echo $color | sed -e 's/\([0-9]\+\),\([0-9]\+\),\([0-9]\+\)/customPalette = append(customPalette, colorful.Color{R: \1.0\/255.0, G: \2.0\/255.0, B: \3.0\/255.0})/' >> /tmp/p; done
+
+https://angrytools.com/gradient/?4_00BCD4,18_00FF2A,57_FFFF11,72_FF8A00,95_FF08EE&l_90_50_50
