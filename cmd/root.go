@@ -44,12 +44,12 @@ var (
 			)
 
 			if displayType == "dmx" {
-				var uDmxDevice *udmx.UDmxDevice
+				uDmxDevice := udmx.UDmxDevice{}
 
 				uDmxDevice.Open()
 				defer uDmxDevice.Close()
 
-				disp = display.NewDmxDisplay(displaySize, uDmxDevice)
+				disp = display.NewDmxDisplay(displaySize, &uDmxDevice)
 			} else if displayType == "dummy" {
 				disp = display.NewDummyDisplay()
 			}
@@ -87,7 +87,7 @@ func Execute() error {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./mindlights.yaml)")
-	rootCmd.PersistentFlags().StringVar(&csvOutFile, "csv-out-file", "/tmp/mindlights.csv", "config file (default is ./.yamle.yaml)")
+	rootCmd.PersistentFlags().StringVar(&csvOutFile, "csv-out-file", "", "config file (default is ./.yamle.yaml)")
 	rootCmd.PersistentFlags().StringVar(&serialDevice, "serial-device", "/dev/rfcomm0", "config file (default is ./.yamle.yaml)")
 	rootCmd.PersistentFlags().StringVar(&displayType, "display", "dummy", "config file (default is ./.yamle.yaml)")
 	rootCmd.PersistentFlags().IntVar(&displaySize, "display-size", 8, "config file (default is ./.yamle.yaml)")

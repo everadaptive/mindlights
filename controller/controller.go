@@ -32,11 +32,13 @@ func NewController(display display.ColorDisplay, neuroDriver *neurosky.Driver, n
 }
 
 func (c Controller) Start() {
-	d2 := EEGFullData{}
-	if err := c.csvWriter.Write(d2.GetHeaders()); err != nil {
-		log.Fatalln("error writing headers to csv:", err)
+	if c.csvWriter != nil {
+		d2 := EEGFullData{}
+		if err := c.csvWriter.Write(d2.GetHeaders()); err != nil {
+			log.Fatalln("error writing headers to csv:", err)
+		}
+		c.csvWriter.Flush()
 	}
-	c.csvWriter.Flush()
 
 	colors := make([]colorful.Color, c.display.DisplaySize())
 
@@ -98,12 +100,14 @@ func (c Controller) DoWork(colors []colorful.Color) {
 		fullData.Timestamp = time.Now().UTC().Format(time.RFC3339)
 		v := fullData.ToSlice()
 		log.Printf("%s", v)
-		if err := c.csvWriter.Write(v); err != nil {
-			log.Fatalln("error writing record to csv:", err)
-		}
+		if c.csvWriter != nil {
+			if err := c.csvWriter.Write(v); err != nil {
+				log.Fatalln("error writing record to csv:", err)
+			}
 
-		// Write any buffered data to the underlying writer (standard output).
-		c.csvWriter.Flush()
+			// Write any buffered data to the underlying writer (standard output).
+			c.csvWriter.Flush()
+		}
 	})
 }
 
