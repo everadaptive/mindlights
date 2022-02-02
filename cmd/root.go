@@ -29,7 +29,7 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "mindlights",
-		Short: "A simple YAML encrypter",
+		Short: "Use data from a Neurosky to control things",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 			return initializeConfig(cmd)
@@ -86,12 +86,12 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./mindlights.yaml)")
-	rootCmd.PersistentFlags().StringVar(&csvOutFile, "csv-out-file", "", "config file (default is ./.yamle.yaml)")
-	rootCmd.PersistentFlags().StringVar(&serialDevice, "serial-device", "/dev/rfcomm0", "config file (default is ./.yamle.yaml)")
-	rootCmd.PersistentFlags().StringVar(&displayType, "display", "dummy", "config file (default is ./.yamle.yaml)")
-	rootCmd.PersistentFlags().IntVar(&displaySize, "display-size", 8, "config file (default is ./.yamle.yaml)")
-	rootCmd.PersistentFlags().BoolVar(&displaytest, "display-test", false, "config file (default is ./.yamle.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default \"./mindlights.yaml\")")
+	rootCmd.PersistentFlags().StringVar(&csvOutFile, "csv-out-file", "", "CSV data log file")
+	rootCmd.PersistentFlags().StringVar(&serialDevice, "serial-device", "/dev/rfcomm0", "Neurosky/MindFlex serial device path")
+	rootCmd.PersistentFlags().StringVar(&displayType, "display", "dummy", "output display. 'dummy' or 'dmx'")
+	rootCmd.PersistentFlags().IntVar(&displaySize, "display-size", 8, "output display size")
+	rootCmd.PersistentFlags().BoolVar(&displaytest, "display-test", false, "output display test pattern and exit")
 }
 
 func initializeConfig(cmd *cobra.Command) error {
