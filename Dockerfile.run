@@ -4,6 +4,6 @@ COPY mindlights .
 COPY hack ./hack
 
 RUN apt update \
- && apt install bluez
+ && apt-get install --yes bluez
 
 ENTRYPOINT [ "hack/scripts/run.sh" ]
