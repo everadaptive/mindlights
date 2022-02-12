@@ -3,4 +3,7 @@ FROM debian:latest
 COPY mindlights .
 COPY hack ./hack
 
+RUN apt update \
+ && apt install bluez
+
 ENTRYPOINT [ "hack/scripts/run.sh" ]
