@@ -1,6 +1,6 @@
 FROM debian:latest
 
 COPY mindlights .
-COPY hack .
+COPY hack ./hack
 
 ENTRYPOINT [ "hack/scripts/run.sh" ]
