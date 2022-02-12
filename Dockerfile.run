@@ -4,6 +4,6 @@ COPY mindlights .
 COPY hack ./hack
 
 RUN apt update \
- && apt-get install --yes bluez
+ && apt-get install --yes bluez libusb-1.0-0
 
 ENTRYPOINT [ "hack/scripts/run.sh" ]
