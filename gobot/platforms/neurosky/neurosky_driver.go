@@ -179,10 +179,6 @@ func (n *Driver) parse(buf *bytes.Buffer) int {
 	b1 := byte(0)
 
 	for buf.Len() > 2 {
-		if count > 100 {
-			return 90
-		}
-
 		if count == 0 {
 			count++
 			b1, _ = buf.ReadByte()
