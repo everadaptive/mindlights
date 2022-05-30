@@ -21,3 +21,5 @@ func (d DummyDisplay) SetSingleColor(color colorful.Color) error {
 func (d DummyDisplay) DisplaySize() int {
 	return 1
 }
+
+func (d DummyDisplay) Render() {}

@@ -6,4 +6,5 @@ type ColorDisplay interface {
 	SetColor(id int, color colorful.Color) error
 	SetSingleColor(color colorful.Color) error
 	DisplaySize() int
+	Render()
 }

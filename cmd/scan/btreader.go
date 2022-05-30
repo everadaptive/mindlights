@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/everadaptive/mindlights/controller"
 	"golang.org/x/sys/unix"
 )
 
@@ -22,9 +23,10 @@ func (b *BTReader) Write(p []byte) (n int, err error) {
 	return unix.Write(b.fd, p)
 }
 
-func ParseMindflex(data []byte) {
+func ParseMindflex(data []byte, events chan controller.MindflexEvent) {
 	extendedCodeLevel := 0
 	doneCodeLevel := true
+	e := controller.MindflexEEGPower{}
 
 	for n := 0; n < len(data); n++ {
 		if !doneCodeLevel && data[n] == 0x55 {
@@ -48,30 +50,54 @@ func ParseMindflex(data []byte) {
 			for k := 1; k <= length; k++ {
 				// log.Printf(" 0x%02X", data[n+k]&0xFF)
 				switch code {
-				case POOR_SIGNAL:
+				case controller.POOR_SIGNAL:
 					log.Debugf("SIGNAL: %d", int(data[n+k]))
-				case ATTENTION:
+					events <- controller.MindflexEvent{
+						Type:          controller.POOR_SIGNAL,
+						SignalQuality: int(data[n+k]),
+					}
+				case controller.ATTENTION:
 					log.Debugf("ATTENTION: %d", int(data[n+k]))
-				case MEDITATION:
+					events <- controller.MindflexEvent{
+						Type:      controller.ATTENTION,
+						Attention: int(data[n+k]),
+					}
+				case controller.MEDITATION:
 					log.Debugf("MEDITATION: %d", int(data[n+k]))
-				case EEG_POWER:
+					events <- controller.MindflexEvent{
+						Type:       controller.MEDITATION,
+						Meditation: int(data[n+k]),
+					}
+				case controller.EEG_POWER:
 					switch k {
 					case 1:
 						log.Debugf("DELTA: %d", parse3ByteInteger(data[k:k+3]))
+						e.Delta = parse3ByteInteger(data[k : k+3])
 					case 4:
 						log.Debugf("THETA: %d", parse3ByteInteger(data[k:k+3]))
+						e.Theta = parse3ByteInteger(data[k : k+3])
 					case 7:
 						log.Debugf("LOW_ALPHA: %d", parse3ByteInteger(data[k:k+3]))
+						e.Low_Alpha = parse3ByteInteger(data[k : k+3])
 					case 10:
 						log.Debugf("HIGH_ALPHA: %d", parse3ByteInteger(data[k:k+3]))
+						e.High_Alpha = parse3ByteInteger(data[k : k+3])
 					case 13:
 						log.Debugf("LOW_BETA: %d", parse3ByteInteger(data[k:k+3]))
+						e.Low_Beta = parse3ByteInteger(data[k : k+3])
 					case 16:
 						log.Debugf("HIGH_BETA: %d", parse3ByteInteger(data[k:k+3]))
+						e.High_Beta = parse3ByteInteger(data[k : k+3])
 					case 19:
 						log.Debugf("LOW_GAMMA: %d", parse3ByteInteger(data[k:k+3]))
+						e.Low_Gamma = parse3ByteInteger(data[k : k+3])
 					case 22:
 						log.Debugf("HIGH_GAMMA: %d", parse3ByteInteger(data[k:k+3]))
+						e.High_Gamma = parse3ByteInteger(data[k : k+3])
+						events <- controller.MindflexEvent{
+							Type:     controller.EEG_POWER,
+							EEGPower: e,
+						}
 					}
 					k = k + 2
 				}
@@ -94,7 +120,7 @@ func ScanMindflex(data []byte, atEOF bool) (advance int, token []byte, err error
 	packetLength := 0
 	syncCount := 0
 	for n := 0; n < len(data)-1; n++ {
-		if data[n] == 0xAA {
+		if data[n] == controller.SYNC {
 			syncCount++
 		}
 
@@ -102,12 +128,12 @@ func ScanMindflex(data []byte, atEOF bool) (advance int, token []byte, err error
 			packetStart = n - 2
 
 			// We might have an additional SYNC
-			if data[n] == 0xAA {
+			if data[n] == controller.SYNC {
 				continue
 			}
 
 			// PLENGTH TO LARGE
-			if data[n] > 0xAA {
+			if data[n] > controller.SYNC {
 				syncCount = 0
 				continue
 			}

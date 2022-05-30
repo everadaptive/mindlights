@@ -1,33 +1,23 @@
 package main
 
 import (
-	"bufio"
-	"encoding/csv"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
 
-	"github.com/everadaptive/mindlights/controller"
-	"github.com/everadaptive/mindlights/display"
 	"github.com/everadaptive/mindlights/udmx"
-	"github.com/lucasb-eyer/go-colorful"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 )
 
 var (
 	// Used for flags.
-	cfgFile          string
-	csvOutFile       string
-	displayType      string
-	displaySize      int
-	displaytest      bool
-	bluetoothAddress string
+	cfgFile     string
+	displayType string
+	displaySize int
 
 	envPrefix = "MINDLIGHTS"
 
@@ -40,50 +30,33 @@ var (
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			var (
-				disp      display.ColorDisplay
-				csvWriter *csv.Writer
-				palette   []colorful.Color
+				// disp      display.ColorDisplay
+				// palette   []colorful.Color
+				dmxDevice udmx.DmxDevice
 			)
 			logger, _ := zap.NewDevelopment()
 			defer logger.Sync() // flushes buffer, if any
 			log = logger.Sugar()
 
 			if displayType == "udmx" {
-				dmxDevice := udmx.UDmxDevice{}
+				dmxDevice = &udmx.UDmxDevice{}
 
 				dmxDevice.Open()
 				defer dmxDevice.Close()
 
-				disp = display.NewUDmxDisplay(displaySize, &dmxDevice)
+				// disp = display.NewUDmxDisplay(displaySize, dmxDevice)
 			} else if displayType == "serialdmx" {
-				dmxDevice := udmx.SerialDMXDevice{}
+				dmxDevice = &udmx.SerialDMXDevice{}
 
 				dmxDevice.Open()
 				defer dmxDevice.Close()
 
-				disp = display.NewSerialDmxDisplay(displaySize, &dmxDevice)
+				// disp = display.NewSerialDmxDisplay(displaySize, dmxDevice)
 			} else if displayType == "dummy" {
-				disp = display.NewDummyDisplay()
+				// disp = display.NewDummyDisplay()
 			}
 
-			if csvOutFile != "" {
-				f, _ := os.OpenFile(csvOutFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-				defer f.Close()
-
-				csvWriter = csv.NewWriter(f)
-			}
-
-			palette = controller.CustomPalette6()
-
-			mac := str2ba(bluetoothAddress) // YOUR BLUETOOTH MAC ADDRESS HERE
-
-			fd, err := unix.Socket(syscall.AF_BLUETOOTH, syscall.SOCK_STREAM, unix.BTPROTO_RFCOMM)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer unix.Close(fd)
-
-			addr := &unix.SockaddrRFCOMM{Addr: mac, Channel: 1}
+			// palette = controller.CustomPalette6()
 
 			signalChan := make(chan os.Signal)
 			signal.Notify(signalChan, os.Interrupt)
@@ -91,41 +64,10 @@ var (
 			go func() {
 				sig := <-signalChan
 				fmt.Printf("Got %s signal. Aborting...\n", sig)
-				unix.Close(fd)
 			}()
 
-			log.Infow("connecting to headset", "mac", bluetoothAddress)
-			err = unix.Connect(fd, addr)
-			if err != nil {
-				unix.Close(fd)
-				log.Fatal(err)
-			}
-			log.Infow("connected to headset", "mac", bluetoothAddress)
-
-			btReader := NewBTReader(fd)
-			btReader.Write([]byte{0x02})
-
-			scanner := bufio.NewScanner(&btReader)
-			scanner.Split(ScanMindflex)
-
-			events := make(chan controller.MindflexEvent, 10)
-
-			c := controller.NewController(disp, events, csvWriter, palette)
-
-			if displaytest {
-				c.DisplayTest()
-				return
-			}
-
-			c.Start()
-
-			for scanner.Scan() {
-				p := scanner.Bytes()
-				if len(p) > 7 {
-					log.Infow("received packet", "length", len(p), "data", p)
-					ParseMindflex(p[3:], events)
-				}
-			}
+			dmxDevice.SetChannelColor(1, 255)
+			dmxDevice.Render()
 		},
 	}
 )
@@ -137,11 +79,8 @@ func Execute() error {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "./mindlights.yaml", "config file")
-	rootCmd.PersistentFlags().StringVar(&csvOutFile, "csv-out-file", "", "CSV data log file")
-	rootCmd.PersistentFlags().StringVar(&bluetoothAddress, "bluetooth-address", "98:D3:31:80:7B:3D", "Neurosky/MindFlex bluetooth address")
 	rootCmd.PersistentFlags().StringVar(&displayType, "display", "dummy", "output display 'dummy', 'udmx', 'serialdmx'")
 	rootCmd.PersistentFlags().IntVar(&displaySize, "display-size", 8, "output display size")
-	rootCmd.PersistentFlags().BoolVar(&displaytest, "display-test", false, "output display test pattern and exit")
 }
 
 func initializeConfig(cmd *cobra.Command) error {

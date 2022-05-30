@@ -1,0 +1,5 @@
+bluetoothAddress: "98:D3:31:80:7B:3D"
+display: dmx
+display-size: 8
+udmx-pid: 0x0403
+udmx-vid: 0x6001
