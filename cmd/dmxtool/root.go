@@ -30,8 +30,6 @@ var (
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			var (
-				// disp      display.ColorDisplay
-				// palette   []colorful.Color
 				dmxDevice udmx.DmxDevice
 			)
 			logger, _ := zap.NewDevelopment()
@@ -43,20 +41,12 @@ var (
 
 				dmxDevice.Open()
 				defer dmxDevice.Close()
-
-				// disp = display.NewUDmxDisplay(displaySize, dmxDevice)
 			} else if displayType == "serialdmx" {
 				dmxDevice = &udmx.SerialDMXDevice{}
 
 				dmxDevice.Open()
 				defer dmxDevice.Close()
-
-				// disp = display.NewSerialDmxDisplay(displaySize, dmxDevice)
-			} else if displayType == "dummy" {
-				// disp = display.NewDummyDisplay()
 			}
-
-			// palette = controller.CustomPalette6()
 
 			signalChan := make(chan os.Signal)
 			signal.Notify(signalChan, os.Interrupt)
