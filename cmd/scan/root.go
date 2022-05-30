@@ -61,7 +61,7 @@ var (
 				dmxDevice.Open()
 				defer dmxDevice.Close()
 
-				disp = display.NewSerialDmxDisplay(displaySize, &dmxDevice)
+				disp = display.NewUDmxDisplay(displaySize, &dmxDevice)
 			} else if displayType == "dummy" {
 				disp = display.NewDummyDisplay()
 			}

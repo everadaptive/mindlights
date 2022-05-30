@@ -2,12 +2,11 @@ package controller
 
 import (
 	"github.com/dnlo/struct2csv"
-	"gobot.io/x/gobot/platforms/neurosky"
 )
 
 type EEGFullData struct {
-	Timestamp string
-	neurosky.FullData
+	Timestamp     string
+	MindflexEvent MindflexEvent
 }
 
 func (d EEGFullData) GetHeaders() []string {
