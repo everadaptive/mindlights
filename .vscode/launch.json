@@ -5,6 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "displaytest",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/displaytest",
+            "args": [
+            ],
+        },  
+        {
+            "name": "serialdmx",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/dmxtool",
+            "args": [
+                "--display=ftdidmx"
+            ],
+        },    
+        {
             "name": "HEADSET-03+dummy",
             "type": "go",
             "request": "launch",
@@ -20,12 +39,11 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}",
+            "program": "${workspaceFolder}/cmd/scan",
             "args": [
                 "--bluetooth-address=98:D3:31:80:7B:3D",
-                "--display=dmx"
+                "--display=ftdidmx"
             ],
-            "sudo": true
         }
     ]
 }

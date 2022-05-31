@@ -16,7 +16,8 @@ type UDmxDevice struct {
 func (d *UDmxDevice) Open() {
 	ctx := gousb.NewContext()
 
-	vid, pid := gousb.ID(0x16c0), gousb.ID(0x05dc)
+	// vid, pid := gousb.ID(0x16c0), gousb.ID(0x05dc)
+	vid, pid := gousb.ID(0x0403), gousb.ID(0x6001)
 	device, err := ctx.OpenDeviceWithVIDPID(vid, pid)
 	if err != nil {
 		log.Fatalf("OpenDeviceWithVIDPID(): %v", err)

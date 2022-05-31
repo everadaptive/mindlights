@@ -22,12 +22,15 @@ import (
 
 var (
 	// Used for flags.
-	cfgFile          string
-	csvOutFile       string
-	displayType      string
-	displaySize      int
-	displaytest      bool
-	bluetoothAddress string
+	cfgFile                 string
+	csvOutFile              string
+	displayType             string
+	displaySize             int
+	displaytest             bool
+	displayRGBOrder         string
+	displayMasterBrightness int
+	displayFirstRGB         int
+	bluetoothAddress        string
 
 	envPrefix = "MINDLIGHTS"
 
@@ -43,25 +46,47 @@ var (
 				disp      display.ColorDisplay
 				csvWriter *csv.Writer
 				palette   []colorful.Color
+				dmxDevice udmx.DmxDevice
 			)
 			logger, _ := zap.NewDevelopment()
 			defer logger.Sync() // flushes buffer, if any
 			log = logger.Sugar()
 
+			channels := display.DmxChannels{
+				MasterBrightness: displayMasterBrightness,
+				FirstRGBChannel:  displayFirstRGB,
+				RGBOrder:         display.RGB,
+			}
+
+			switch displayRGBOrder {
+			case "rgbw":
+				channels.RGBOrder = display.RGBW
+			case "rgb":
+			default:
+				channels.RGBOrder = display.RGB
+			}
+
 			if displayType == "udmx" {
-				dmxDevice := udmx.UDmxDevice{}
+				dmxDevice = &udmx.UDmxDevice{}
 
 				dmxDevice.Open()
 				defer dmxDevice.Close()
 
-				disp = display.NewUDmxDisplay(displaySize, &dmxDevice)
+				disp = display.NewUDmxDisplay(displaySize, dmxDevice, channels)
 			} else if displayType == "serialdmx" {
-				dmxDevice := udmx.SerialDMXDevice{}
+				dmxDevice = &udmx.SerialDMXDevice{}
 
 				dmxDevice.Open()
 				defer dmxDevice.Close()
 
-				disp = display.NewUDmxDisplay(displaySize, &dmxDevice)
+				disp = display.NewUDmxDisplay(displaySize, dmxDevice, channels)
+			} else if displayType == "ftdidmx" {
+				dmxDevice = &udmx.FTDIDMXDevice{}
+
+				dmxDevice.Open()
+				defer dmxDevice.Close()
+
+				disp = display.NewUDmxDisplay(displaySize, dmxDevice, channels)
 			} else if displayType == "dummy" {
 				disp = display.NewDummyDisplay()
 			}
@@ -97,6 +122,7 @@ var (
 			log.Infow("connecting to headset", "mac", bluetoothAddress)
 			err = unix.Connect(fd, addr)
 			if err != nil {
+				dmxDevice.Close()
 				unix.Close(fd)
 				log.Fatal(err)
 			}
@@ -140,8 +166,11 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&csvOutFile, "csv-out-file", "", "CSV data log file")
 	rootCmd.PersistentFlags().StringVar(&bluetoothAddress, "bluetooth-address", "98:D3:31:80:7B:3D", "Neurosky/MindFlex bluetooth address")
 	rootCmd.PersistentFlags().StringVar(&displayType, "display", "dummy", "output display 'dummy', 'udmx', 'serialdmx'")
-	rootCmd.PersistentFlags().IntVar(&displaySize, "display-size", 8, "output display size")
-	rootCmd.PersistentFlags().BoolVar(&displaytest, "display-test", false, "output display test pattern and exit")
+	rootCmd.PersistentFlags().IntVar(&displaySize, "display-size", 8, "display size")
+	rootCmd.PersistentFlags().BoolVar(&displaytest, "display-test", false, "display test pattern and exit")
+	rootCmd.PersistentFlags().StringVar(&displayRGBOrder, "display-rgb-order", "rgb", "display color order 'rgb', 'rgbw'")
+	rootCmd.PersistentFlags().IntVar(&displayMasterBrightness, "display-master-brightness", 0, "display master brightness channel")
+	rootCmd.PersistentFlags().IntVar(&displayFirstRGB, "display-first-rgb", 1, "display first rgb channel")
 }
 
 func initializeConfig(cmd *cobra.Command) error {

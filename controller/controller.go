@@ -15,6 +15,7 @@ type Controller struct {
 	events    chan MindflexEvent
 	csvWriter *csv.Writer
 	palette   []colorful.Color
+	colors    []colorful.Color
 }
 
 func NewController(display display.ColorDisplay, events chan MindflexEvent, csvWriter *csv.Writer, palette []colorful.Color) Controller {
@@ -26,7 +27,7 @@ func NewController(display display.ColorDisplay, events chan MindflexEvent, csvW
 	}
 }
 
-func (c Controller) Start() {
+func (c *Controller) Start() {
 	if c.csvWriter != nil {
 		d2 := EEGFullData{}
 		if err := c.csvWriter.Write(d2.GetHeaders()); err != nil {
@@ -35,25 +36,27 @@ func (c Controller) Start() {
 		c.csvWriter.Flush()
 	}
 
-	colors := make([]colorful.Color, c.display.DisplaySize())
+	c.colors = make([]colorful.Color, c.display.DisplaySize())
 
-	go func() {
-		defer close(c.events)
+	if c.events != nil {
+		go func() {
+			defer close(c.events)
 
-		for {
-			select {
-			case v, ok := <-c.events:
-				if !ok {
-					return
+			for {
+				select {
+				case v, ok := <-c.events:
+					if !ok {
+						return
+					}
+
+					c.DoWork(v)
 				}
-
-				c.DoWork(v, colors)
 			}
-		}
-	}()
+		}()
+	}
 }
 
-func (c Controller) DoWork(v MindflexEvent, colors []colorful.Color) {
+func (c *Controller) DoWork(v MindflexEvent) {
 	switch v.Type {
 	case POOR_SIGNAL:
 		fmt.Println("Signal", v.SignalQuality)
@@ -66,11 +69,10 @@ func (c Controller) DoWork(v MindflexEvent, colors []colorful.Color) {
 			v.Attention = 99
 		}
 
-		colors = colors[1:]
-		colors = append(colors, c.palette[v.Attention])
+		c.colors = append(c.colors, c.palette[v.Attention])[1:]
 
 		for i := 0; i < c.display.DisplaySize(); i++ {
-			c.display.SetColor(i, colors[i])
+			c.display.SetColor(i, c.colors[i])
 		}
 
 		c.display.Render()
@@ -101,7 +103,7 @@ func (c Controller) DoWork(v MindflexEvent, colors []colorful.Color) {
 	}
 }
 
-func (c Controller) DisplayTest() {
+func (c *Controller) DisplayTest() {
 	colors := make([]colorful.Color, c.display.DisplaySize())
 	fmt.Println("step", c.display.DisplaySize())
 
@@ -124,6 +126,6 @@ func (c Controller) DisplayTest() {
 
 		c.display.Render()
 
-		time.Sleep(5 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 }

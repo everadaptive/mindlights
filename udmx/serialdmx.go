@@ -16,7 +16,7 @@ const SET_SINGLE_CHANNEL = 1
 const SET_CHANNEL_RANGE = 2
 
 func (d *SerialDMXDevice) Open() {
-	dmx, e := dmx.NewDMXConnection("/dev/ttyUSB1")
+	dmx, e := dmx.NewDMXConnection("/dev/ttyUSB0")
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -39,8 +39,6 @@ func (d *SerialDMXDevice) SetChannelColor(channel uint16, value uint16) {
 }
 
 func (d *SerialDMXDevice) SetMultiple(values []byte) {
-	// udmx.device.Control(gousb.ControlVendor|gousb.ControlDevice|gousb.ControlOut,
-	// uint8(SET_CHANNEL_RANGE), uint16(len(values)), 1, values)
 }
 
 func (d *SerialDMXDevice) Render() {

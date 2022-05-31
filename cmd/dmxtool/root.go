@@ -46,6 +46,11 @@ var (
 
 				dmxDevice.Open()
 				defer dmxDevice.Close()
+			} else if displayType == "ftdidmx" {
+				dmxDevice = &udmx.FTDIDMXDevice{}
+
+				dmxDevice.Open()
+				defer dmxDevice.Close()
 			}
 
 			signalChan := make(chan os.Signal)
@@ -56,8 +61,19 @@ var (
 				fmt.Printf("Got %s signal. Aborting...\n", sig)
 			}()
 
-			dmxDevice.SetChannelColor(1, 255)
-			dmxDevice.Render()
+			// dmxDevice.SetChannelColor(1, 255)
+			// dmxDevice.SetChannelColor(2, 0)
+			// dmxDevice.SetChannelColor(5, 255)
+
+			// dmxDevice.Render()
+
+			for n := 1; n < 512; n++ {
+				dmxDevice.SetChannelColor(1, 255)
+				dmxDevice.SetChannelColor(2, 0)
+				dmxDevice.SetChannelColor(3, uint16(n/2))
+
+				dmxDevice.Render()
+			}
 		},
 	}
 )
