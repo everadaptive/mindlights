@@ -1,4 +1,4 @@
-bluetoothAddress: "98:D3:31:80:7B:3D"
+bluetoothAddress: "98:D3:31:80:7B:67"
 display: dmx
 display-size: 8
 udmx-pid: 0x0403
@@ -11,6 +11,6 @@ eeg:
   - name: headset-01
     bluetoothAddress: "98:D3:31:80:7B:3D"
   - name: headset-02
-    bluetoothAddress: "98:D3:31:80:7B:3D"
+    bluetoothAddress: "98:D3:31:80:7B:67"
   - name: headset-03
     bluetoothAddress: "98:D3:31:80:7B:3D"
