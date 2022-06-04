@@ -1,0 +1,28 @@
+hr {
+  border: 1px solid #455264;
+}
+.simple-stream {
+  margin-top: 20px;
+}
+
+.main-container {
+  margin: 30px;
+}
+
+.response {
+  margin-left: 20px;
+}
+
+.word {
+  color: white;
+}
+
+.bird {
+  color: green;
+}
+
+.word-fade {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 500ms, opacity 500ms linear;
+}
