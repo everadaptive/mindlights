@@ -1,23 +1,21 @@
 package main
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
 
 	"github.com/everadaptive/mindlights/controller"
 	"github.com/everadaptive/mindlights/display"
+	"github.com/everadaptive/mindlights/eeg/neurosky"
 	"github.com/everadaptive/mindlights/udmx"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -31,6 +29,8 @@ var (
 	displayMasterBrightness int
 	displayFirstRGB         int
 	bluetoothAddress        string
+
+	log *zap.SugaredLogger
 
 	envPrefix = "MINDLIGHTS"
 
@@ -91,24 +91,13 @@ var (
 				disp = display.NewDummyDisplay()
 			}
 
-			if csvOutFile != "" {
-				f, _ := os.OpenFile(csvOutFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-				defer f.Close()
-
-				csvWriter = csv.NewWriter(f)
-			}
-
 			palette = controller.CustomPalette6()
 
-			mac := str2ba(bluetoothAddress) // YOUR BLUETOOTH MAC ADDRESS HERE
-
-			fd, err := unix.Socket(syscall.AF_BLUETOOTH, syscall.SOCK_STREAM, unix.BTPROTO_RFCOMM)
+			neurosky, err := neurosky.NewNeurosky(bluetoothAddress, "HEADSET-03")
 			if err != nil {
 				log.Fatal(err)
 			}
-			defer unix.Close(fd)
-
-			addr := &unix.SockaddrRFCOMM{Addr: mac, Channel: 1}
+			events := neurosky.Start()
 
 			signalChan := make(chan os.Signal)
 			signal.Notify(signalChan, os.Interrupt)
@@ -116,42 +105,12 @@ var (
 			go func() {
 				sig := <-signalChan
 				fmt.Printf("Got %s signal. Aborting...\n", sig)
-				unix.Close(fd)
+				neurosky.Close()
+				close(events)
 			}()
 
-			log.Infow("connecting to headset", "mac", bluetoothAddress)
-			err = unix.Connect(fd, addr)
-			if err != nil {
-				dmxDevice.Close()
-				unix.Close(fd)
-				log.Fatal(err)
-			}
-			log.Infow("connected to headset", "mac", bluetoothAddress)
-
-			btReader := NewBTReader(fd)
-			btReader.Write([]byte{0x02})
-
-			scanner := bufio.NewScanner(&btReader)
-			scanner.Split(ScanMindflex)
-
-			events := make(chan controller.MindflexEvent, 10)
-
 			c := controller.NewController(disp, events, csvWriter, palette)
-
-			if displaytest {
-				c.DisplayTest()
-				return
-			}
-
 			c.Start()
-
-			for scanner.Scan() {
-				p := scanner.Bytes()
-				if len(p) > 7 {
-					log.Infow("received packet", "length", len(p), "data", p)
-					ParseMindflex(p[3:], events)
-				}
-			}
 		},
 	}
 )

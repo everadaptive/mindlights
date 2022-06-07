@@ -5,14 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "pwa-chrome",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/cmd/stream/app"
+        },
+        {
             "name": "displaytest",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/displaytest",
-            "args": [
-            ],
-        },  
+            "args": [],
+        },
         {
             "name": "serialdmx",
             "type": "go",
@@ -22,7 +28,15 @@
             "args": [
                 "--display=ftdidmx"
             ],
-        },    
+        },
+        {
+            "name": "stream",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/stream",
+            "args": [],
+        },
         {
             "name": "HEADSET-03+dummy",
             "type": "go",
@@ -30,7 +44,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/scan",
             "args": [
-                "--bluetooth-address=98:D3:31:80:7B:67",
+                "--bluetooth-address=98:D3:31:80:7B:3D",
                 "--display=dummy"
             ],
         },

@@ -36,10 +36,10 @@ export default class App extends BaseComponent<any, AppState> {
             connected: false
           });
         },
-        "transport-bus.io",
-        443,
+        "localhost",
+        30080,
         "/ws",
-        true,
+        false,
         "/topic",
         "/queue"
       );

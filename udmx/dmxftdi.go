@@ -32,7 +32,7 @@ func (d *FTDIDMXDevice) SetChannelColor(channel uint16, value uint16) {
 		log.Println(err)
 	}
 
-	log.Printf("Setting channel %d to %d", int(channel), byte(value))
+	// log.Printf("Setting channel %d to %d", int(channel), byte(value))
 }
 
 func (d *FTDIDMXDevice) SetMultiple(values []byte) {

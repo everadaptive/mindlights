@@ -3,17 +3,24 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/vmware/transport-go/model"
-	"github.com/vmware/transport-go/service"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	dsp "github.com/eripe970/go-dsp-utils"
+	"github.com/everadaptive/mindlights/controller"
+	"github.com/vmware/transport-go/model"
+	"github.com/vmware/transport-go/service"
 )
 
 const (
 	NeuroskyServiceChan = "neurosky-service"
+
+	NeuroskySignalChan     = "signal-quality"
+	NeuroskyAttentionChan  = "attention"
+	NeuroskyMeditationChan = "meditation"
+	NeuroskyEEGPowerChan   = "eeg-power"
+	NeuroskyEEGRawChan     = "eeg-raw"
 )
 
 // NeuroskyService is a very simple service to demonstrate how request-response cycles are handled in Transport & Plank.
@@ -21,21 +28,64 @@ const (
 // a POJO type (e.g. {"anything": "here"}), whereas the second expects the payload to be a pure string.
 // a request made through the Event Bus API like bus.RequestOnce() will be routed to HandleServiceRequest()
 // which will match the request's Request to the list of available service request types and return the response.
-type NeuroskyService struct{}
+type NeuroskyService struct {
+	events    chan controller.MindflexEvent
+	rawValues []float64
+}
 
-func NewNeuroskyService() *NeuroskyService {
-	return &NeuroskyService{}
+func NewNeuroskyService(events chan controller.MindflexEvent) *NeuroskyService {
+	return &NeuroskyService{
+		events:    events,
+		rawValues: make([]float64, 2048),
+	}
 }
 
 // Init will fire when the service is being registered by the fabric, it passes a reference of the same core
 // Passed through when implementing HandleServiceRequest
 func (ps *NeuroskyService) Init(core service.FabricServiceCore) error {
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskySignalChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskySignalChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyAttentionChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyAttentionChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyMeditationChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyMeditationChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyEEGPowerChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyEEGPowerChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyEEGRawChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyEEGRawChan))
 
-	// set default headers for this service.
-	core.SetHeaders(map[string]string{
-		"Content-Type": "application/json",
-	})
+	go func() {
+		count := 0
+		for v := range ps.events {
+			switch v.Type {
+			case controller.POOR_SIGNAL:
+				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskySignalChan), v, nil)
+			case controller.ATTENTION:
+				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyAttentionChan), v, nil)
+			case controller.MEDITATION:
+				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyMeditationChan), v, nil)
+			case controller.EEG_POWER:
+				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyEEGPowerChan), v, nil)
+			case controller.EEG_RAW:
+				ps.rawValues = append(ps.rawValues[1:], float64(v.EEGRawPower))
+				if count%100 == 0 {
+					count = 0
+					s := dsp.Signal{
+						SampleRate: 512,
+						Signal:     ps.rawValues,
+					}
+					n, _ := s.Normalize()
+					filt, _ := n.LowPassFilter(110)
 
+					fs, _ := filt.FrequencySpectrum()
+					f := []controller.ComplexValue{}
+					for k := range fs.Frequencies {
+						if fs.Frequencies[k] < 110 {
+							f = append(f, controller.ComplexValue{Real: fs.Spectrum[k], Imaginary: fs.Frequencies[k]})
+						}
+					}
+					v.EEGRawPowerFFT = f
+					core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyEEGRawChan), v, nil)
+				}
+				count++
+			}
+		}
+	}()
 	return nil
 }
 
@@ -103,6 +153,6 @@ func (ps *NeuroskyService) GetRESTBridgeConfig() []*service.RESTBridgeConfig {
 				body, _ := ioutil.ReadAll(r.Body)
 				return model.CreateServiceRequest("signal-quality", body)
 			},
-		}
+		},
 	}
 }

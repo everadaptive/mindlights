@@ -2,12 +2,11 @@ package controller
 
 import (
 	"encoding/csv"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/everadaptive/mindlights/display"
 	"github.com/lucasb-eyer/go-colorful"
+	"go.uber.org/zap"
 )
 
 type Controller struct {
@@ -16,6 +15,16 @@ type Controller struct {
 	csvWriter *csv.Writer
 	palette   []colorful.Color
 	colors    []colorful.Color
+}
+
+var (
+	log *zap.SugaredLogger
+)
+
+func init() {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync() // flushes buffer, if any
+	log = logger.Sugar()
 }
 
 func NewController(display display.ColorDisplay, events chan MindflexEvent, csvWriter *csv.Writer, palette []colorful.Color) Controller {
@@ -31,37 +40,25 @@ func (c *Controller) Start() {
 	if c.csvWriter != nil {
 		d2 := EEGFullData{}
 		if err := c.csvWriter.Write(d2.GetHeaders()); err != nil {
-			log.Fatalln("error writing headers to csv:", err)
+			log.Fatal("error writing headers to csv:", err)
 		}
 		c.csvWriter.Flush()
 	}
 
 	c.colors = make([]colorful.Color, c.display.DisplaySize())
 
-	if c.events != nil {
-		go func() {
-			defer close(c.events)
-
-			for {
-				select {
-				case v, ok := <-c.events:
-					if !ok {
-						return
-					}
-
-					c.DoWork(v)
-				}
-			}
-		}()
+	for v := range c.events {
+		c.DoWork(v)
 	}
 }
 
 func (c *Controller) DoWork(v MindflexEvent) {
+	log.Debugw("packet received", "source", v.Source, "signal", v.SignalQuality, "attention", v.Attention, "meditation", v.Meditation)
+
 	switch v.Type {
 	case POOR_SIGNAL:
-		fmt.Println("Signal", v.SignalQuality)
+		break
 	case ATTENTION:
-		fmt.Printf("Attention=%d\n", v.Attention)
 		if v.Attention == 0 {
 			v.Attention = 1
 		}
@@ -69,13 +66,13 @@ func (c *Controller) DoWork(v MindflexEvent) {
 			v.Attention = 99
 		}
 
-		c.colors = append(c.colors, c.palette[v.Attention])[1:]
+		// c.colors = append(c.colors, c.palette[v.Attention])[1:]
 
-		for i := 0; i < c.display.DisplaySize(); i++ {
-			c.display.SetColor(i, c.colors[i])
-		}
+		// for i := 0; i < c.display.DisplaySize(); i++ {
+		// 	c.display.SetColor(i, c.colors[i])
+		// }
 
-		c.display.Render()
+		// c.display.Render()
 
 		// red := 2.5 * float64(v.Attention)
 		// c.display.SetSingleColor(colorful.Color{
@@ -84,7 +81,6 @@ func (c *Controller) DoWork(v MindflexEvent) {
 		// 	B: 0,
 		// })
 	case MEDITATION:
-		fmt.Printf("Meditation=%d\n", v.Meditation)
 		if v.Meditation == 0 {
 			v.Meditation = 1
 		}
@@ -92,6 +88,13 @@ func (c *Controller) DoWork(v MindflexEvent) {
 			v.Meditation = 99
 		}
 
+		c.colors = append(c.colors, c.palette[v.Meditation])[1:]
+
+		for i := 0; i < c.display.DisplaySize(); i++ {
+			c.display.SetColor(i, c.colors[i])
+		}
+
+		c.display.Render()
 		// red := 2.5 * float64(v.Meditation)
 		// c.display.SetSingleColor(colorful.Color{
 		// 	R: 0,
@@ -99,23 +102,20 @@ func (c *Controller) DoWork(v MindflexEvent) {
 		// 	B: red,
 		// })
 	case EEG_POWER:
-		fmt.Println("Meditation", v.EEGPower)
+		break
 	}
 }
 
-func (c *Controller) DisplayTest() {
+func (c *Controller) DisplayTest(total_steps int) {
 	colors := make([]colorful.Color, c.display.DisplaySize())
-	fmt.Println("step", c.display.DisplaySize())
-
 	col, _ := colorful.Hex("000000")
 	for i := 0; i < c.display.DisplaySize(); i++ {
 		colors = colors[1:]
 		colors = append(colors, col)
-		fmt.Println(colors)
 	}
 
-	for i := 0; i <= 100; i++ {
-		fmt.Println("step", i, colors)
+	for i := 0; i <= total_steps; i++ {
+		log.Infow("step", i, "total_steps", total_steps, "percent", i/total_steps, "colors", colors)
 
 		colors = colors[1:]
 		colors = append(colors, c.palette[i])
