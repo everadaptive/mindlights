@@ -17,25 +17,11 @@ type Neurosky struct {
 	name             string
 	bluetoothAddress string
 	scanning         bool
+	EventsChan       chan controller.MindflexEvent
+	log              *zap.SugaredLogger
 }
 
-var (
-	log *zap.SugaredLogger
-)
-
-func init() {
-	c := zap.NewDevelopmentConfig()
-	c.Sampling = &zap.SamplingConfig{
-		Initial:    1,
-		Thereafter: 200,
-	}
-
-	logger, _ := c.Build()
-	defer logger.Sync() // flushes buffer, if any
-	log = logger.Sugar()
-}
-
-func NewNeurosky(bluetoothAddress string, name string) (*Neurosky, error) {
+func NewNeurosky(bluetoothAddress string, name string, log *zap.SugaredLogger) (*Neurosky, error) {
 	fd, err := unix.Socket(syscall.AF_BLUETOOTH, syscall.SOCK_STREAM, unix.BTPROTO_RFCOMM)
 	if err != nil {
 		return nil, err
@@ -56,6 +42,7 @@ func NewNeurosky(bluetoothAddress string, name string) (*Neurosky, error) {
 		name:             name,
 		bluetoothAddress: bluetoothAddress,
 		scanning:         false,
+		log:              log,
 	}, nil
 }
 
@@ -70,7 +57,7 @@ func (b *Neurosky) Write(p []byte) (n int, err error) {
 func (b *Neurosky) Start() (events chan controller.MindflexEvent) {
 	b.Write([]byte{0x02})
 
-	events = make(chan controller.MindflexEvent, 10)
+	b.EventsChan = make(chan controller.MindflexEvent, 10)
 
 	b.scanning = true
 	go func() {
@@ -84,7 +71,7 @@ func (b *Neurosky) Start() (events chan controller.MindflexEvent) {
 		b.scanning = false
 	}()
 
-	return events
+	return b.EventsChan
 }
 
 func (b *Neurosky) Stop() {
@@ -117,13 +104,13 @@ func (b *Neurosky) ParseMindflex(data []byte, events chan controller.MindflexEve
 			length = 1
 		}
 
-		log.Infow("received packet", "mac", b.bluetoothAddress, "name", b.name, "length", len(data), "type", fmt.Sprintf("0x%02x", code))
+		b.log.Debugw("received packet", "mac", b.bluetoothAddress, "name", b.name, "length", len(data), "type", fmt.Sprintf("0x%02x", code))
 
 		if length > 0 {
-			// log.Printf("EXCODE level: %d, CODE: 0x%02X, length: %d", extendedCodeLevel, code, length)
-			// log.Printf("Data values:")
+			// b.log.Printf("EXCODE level: %d, CODE: 0x%02X, length: %d", extendedCodeLevel, code, length)
+			// b.log.Printf("Data values:")
 			for k := 1; k <= length; k++ {
-				// log.Printf(" 0x%02X", data[n+k]&0xFF)
+				// b.log.Printf(" 0x%02X", data[n+k]&0xFF)
 				switch code {
 				case controller.RESET:
 					// b.Stop()
@@ -131,21 +118,21 @@ func (b *Neurosky) ParseMindflex(data []byte, events chan controller.MindflexEve
 					// b.Start()
 					break
 				case controller.POOR_SIGNAL:
-					log.Debugw("packet parsed", "source", b.name, "signal", int(data[n+k]))
+					b.log.Debugw("packet parsed", "source", b.name, "signal", int(data[n+k]))
 					events <- controller.MindflexEvent{
 						Type:          controller.POOR_SIGNAL,
 						Source:        b.name,
 						SignalQuality: int(data[n+k]),
 					}
 				case controller.ATTENTION:
-					log.Debugw("packet parsed", "source", b.name, "attention", int(data[n+k]))
+					b.log.Debugw("packet parsed", "source", b.name, "attention", int(data[n+k]))
 					events <- controller.MindflexEvent{
 						Type:      controller.ATTENTION,
 						Source:    b.name,
 						Attention: int(data[n+k]),
 					}
 				case controller.MEDITATION:
-					log.Debugw("packet parsed", "source", b.name, "meditation", int(data[n+k]))
+					b.log.Debugw("packet parsed", "source", b.name, "meditation", int(data[n+k]))
 					events <- controller.MindflexEvent{
 						Type:       controller.MEDITATION,
 						Source:     b.name,
@@ -156,7 +143,7 @@ func (b *Neurosky) ParseMindflex(data []byte, events chan controller.MindflexEve
 					if raw >= 32768 {
 						raw = raw - 65536
 					}
-					// log.Debugw("packet parsed", "source", b.name, "raw", raw)
+					// b.log.Debugw("packet parsed", "source", b.name, "raw", raw)
 					events <- controller.MindflexEvent{
 						Type:        controller.EEG_RAW,
 						Source:      b.name,
@@ -181,7 +168,7 @@ func (b *Neurosky) ParseMindflex(data []byte, events chan controller.MindflexEve
 						e.Low_Gamma = parse3ByteInteger(data[k : k+3])
 					case 22:
 						e.High_Gamma = parse3ByteInteger(data[k : k+3])
-						log.Debugw("packet parsed", "source", b.name, "delta", e.Delta, "theta", e.Theta, "lowAlpha", e.Low_Alpha, "highAlpha", e.High_Alpha, "lowBeta", e.Low_Beta, "highBeta", e.High_Beta, "lowGamma", e.Low_Gamma, "highGamma", e.High_Gamma)
+						b.log.Debugw("packet parsed", "source", b.name, "delta", e.Delta, "theta", e.Theta, "lowAlpha", e.Low_Alpha, "highAlpha", e.High_Alpha, "lowBeta", e.Low_Beta, "highBeta", e.High_Beta, "lowGamma", e.Low_Gamma, "highGamma", e.High_Gamma)
 						events <- controller.MindflexEvent{
 							Type:     controller.EEG_POWER,
 							Source:   b.name,
@@ -228,12 +215,12 @@ func ScanMindflex(data []byte, atEOF bool) (advance int, token []byte, err error
 			}
 
 			packetLength = int(data[n])
-			// log.Printf("packet length: %d, sync: %d", packetLength, syncCount)
+			// b.log.Printf("packet length: %d, sync: %d", packetLength, syncCount)
 			break
 		}
 	}
 
-	// log.Printf("start: %d, packet length: %d, data length: %d", packetStart, packetLength, len(data))
+	// b.log.Printf("start: %d, packet length: %d, data length: %d", packetStart, packetLength, len(data))
 	if packetStart >= 0 && len(data) >= packetStart+packetLength+3 {
 		ret := data[packetStart : packetStart+packetLength+3]
 		return packetStart + packetLength + 3, ret, nil

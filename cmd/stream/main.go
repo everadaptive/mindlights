@@ -23,7 +23,7 @@ func main() {
 	defer logger.Sync() // flushes buffer, if any
 	log = logger.Sugar()
 
-	neurosky, err := neurosky.NewNeurosky("98:D3:31:80:7B:3D", "HEADSET-03")
+	neurosky, err := neurosky.NewNeurosky("98:D3:31:80:7B:3D", "HEADSET-03", log.Named("HEADSET-03"))
 	if err != nil {
 		log.Fatal(err)
 	}

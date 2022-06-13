@@ -15,24 +15,16 @@ type Controller struct {
 	csvWriter *csv.Writer
 	palette   []colorful.Color
 	colors    []colorful.Color
+	log       *zap.SugaredLogger
 }
 
-var (
-	log *zap.SugaredLogger
-)
-
-func init() {
-	logger, _ := zap.NewDevelopment()
-	defer logger.Sync() // flushes buffer, if any
-	log = logger.Sugar()
-}
-
-func NewController(display display.ColorDisplay, events chan MindflexEvent, csvWriter *csv.Writer, palette []colorful.Color) Controller {
+func NewController(display display.ColorDisplay, events chan MindflexEvent, csvWriter *csv.Writer, palette []colorful.Color, log *zap.SugaredLogger) Controller {
 	return Controller{
 		display:   display,
 		events:    events,
 		csvWriter: csvWriter,
 		palette:   palette,
+		log:       log,
 	}
 }
 
@@ -40,7 +32,7 @@ func (c *Controller) Start() {
 	if c.csvWriter != nil {
 		d2 := EEGFullData{}
 		if err := c.csvWriter.Write(d2.GetHeaders()); err != nil {
-			log.Fatal("error writing headers to csv:", err)
+			c.log.Fatal("error writing headers to csv:", err)
 		}
 		c.csvWriter.Flush()
 	}
@@ -53,7 +45,7 @@ func (c *Controller) Start() {
 }
 
 func (c *Controller) DoWork(v MindflexEvent) {
-	log.Debugw("packet received", "source", v.Source, "signal", v.SignalQuality, "attention", v.Attention, "meditation", v.Meditation)
+	c.log.Debugw("packet received", "source", v.Source, "signal", v.SignalQuality, "attention", v.Attention, "meditation", v.Meditation)
 
 	switch v.Type {
 	case POOR_SIGNAL:
@@ -115,7 +107,7 @@ func (c *Controller) DisplayTest(total_steps int) {
 	}
 
 	for i := 0; i <= total_steps; i++ {
-		log.Infow("step", i, "total_steps", total_steps, "percent", i/total_steps, "colors", colors)
+		c.log.Infow("step", i, "total_steps", total_steps, "percent", i/total_steps, "colors", colors)
 
 		colors = colors[1:]
 		colors = append(colors, c.palette[i])

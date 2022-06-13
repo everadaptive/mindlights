@@ -58,6 +58,17 @@
                 "--bluetooth-address=98:D3:31:80:7B:3D",
                 "--display=ftdidmx"
             ],
-        }
+        },
+        {
+            "name": "config+dummy",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/scan",
+            "args": [
+                "--config=${workspaceFolder}/hack/headset-03.yaml",
+                "--display=dummy"
+            ],
+        },
     ]
 }

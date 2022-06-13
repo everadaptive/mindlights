@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 
 	"github.com/everadaptive/mindlights/controller"
 	"github.com/everadaptive/mindlights/display"
@@ -16,6 +17,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var (
@@ -29,8 +31,8 @@ var (
 	displayMasterBrightness int
 	displayFirstRGB         int
 	bluetoothAddress        string
-
-	log *zap.SugaredLogger
+	eegHeadsets             []eegHeadsetConfig
+	log                     *zap.SugaredLogger
 
 	envPrefix = "MINDLIGHTS"
 
@@ -47,8 +49,11 @@ var (
 				csvWriter *csv.Writer
 				palette   []colorful.Color
 				dmxDevice udmx.DmxDevice
+				headsets  map[string]*neurosky.Neurosky
 			)
-			logger, _ := zap.NewDevelopment()
+			logConfig := zap.NewDevelopmentConfig()
+			logConfig.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+			logger, _ := logConfig.Build()
 			defer logger.Sync() // flushes buffer, if any
 			log = logger.Sugar()
 
@@ -93,11 +98,28 @@ var (
 
 			palette = controller.CustomPalette6()
 
-			neurosky, err := neurosky.NewNeurosky(bluetoothAddress, "HEADSET-03")
-			if err != nil {
-				log.Fatal(err)
+			headsets = make(map[string]*neurosky.Neurosky)
+
+			for _, h := range eegHeadsets {
+				neurosky, err := neurosky.NewNeurosky(h.BluetoothAddress, h.Name, log.Named(h.Name))
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				headsets[h.Name] = neurosky
+				headsets[h.Name].Start()
 			}
-			events := neurosky.Start()
+
+			var wg sync.WaitGroup
+
+			for name, hs := range headsets {
+				wg.Add(1)
+				c := controller.NewController(disp, hs.EventsChan, csvWriter, palette, log.Named(name))
+				go func() {
+					c.Start()
+					wg.Done()
+				}()
+			}
 
 			signalChan := make(chan os.Signal)
 			signal.Notify(signalChan, os.Interrupt)
@@ -105,12 +127,15 @@ var (
 			go func() {
 				sig := <-signalChan
 				fmt.Printf("Got %s signal. Aborting...\n", sig)
-				neurosky.Close()
-				close(events)
+
+				for n, ns := range headsets {
+					log.Infof("stopping headset", "headset", n)
+					ns.Close()
+					close(ns.EventsChan)
+				}
 			}()
 
-			c := controller.NewController(disp, events, csvWriter, palette)
-			c.Start()
+			wg.Wait()
 		},
 	}
 )
@@ -166,6 +191,8 @@ func initializeConfig(cmd *cobra.Command) error {
 
 	// Bind the current command's flags to viper
 	bindFlags(cmd, v)
+
+	v.UnmarshalKey("eeg_headsets", &eegHeadsets)
 
 	return nil
 }
