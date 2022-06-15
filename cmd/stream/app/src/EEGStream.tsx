@@ -19,11 +19,11 @@ export function RenderStreamState(props: EEGStreamProps) {
   const meditation = props.currentTick.meditation;
   const signalQuality = props.currentTick.signalQuality;
   return (
-    <div className="response">
+    <div>
       <h1>
-        <span className="word">{attention}</span>
-        <span className="word">{meditation}</span>
-        <span className="word">{signalQuality}</span>
+        {/* <span className="word">{attention}</span>
+        <span className="word">{meditation}</span> */}
+        <span className="word">Signal {signalQuality}</span>
       </h1>
     </div>
   );
@@ -114,13 +114,20 @@ export class EEGStream extends BaseComponent<
     const handler = (streamVal: EEGEvent) => {
       switch (streamVal.type) {
         case 0x02: {
-          let c = [...this.state.signalQualityData, { date: new Date(), value: streamVal.signalQuality, subject: "", index: 0 }]
-          if (c.length > 60) {
-            c = c.slice(1)
-          }
+          // let c = [...this.state.signalQualityData, { date: new Date(), value: streamVal.signalQuality, subject: "", index: 0 }]
+          // if (c.length > 60) {
+          //   c = c.slice(1)
+          // }
+          // this.setState({
+          //   signalQualityData: c,
+          // });
           this.setState({
-            signalQualityData: c,
-          });
+            currentTick: {
+              attention: 0,
+              meditation: 0,
+              signalQuality: streamVal.signalQuality
+            }
+          })
         }
           break;
         case 0x04: {
@@ -239,28 +246,6 @@ export class EEGStream extends BaseComponent<
         </div>
         <div cds-layout="col@sm:9">
           <RenderStreamState currentTick={this.state.currentTick} />
-        </div>
-        <div cds-layout="col@sm:12">
-          <LineChart
-            width={1400}
-            height={100}
-            data={this.state.signalQualityData}
-            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
-          >
-            <XAxis
-              dataKey="date"
-              scale="time"
-              tickFormatter={(tick, index) => formatXAxis(tick, index)}
-            />
-            <YAxis domain={[0, 200]}>
-              <Label angle={-90} value='signal quality' position='insideLeft' style={{ textAnchor: 'middle' }} />
-            </YAxis>
-            <Tooltip />
-            <CartesianGrid stroke="#f5f5f5" />
-            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0}>
-              <LabelList dataKey="value" position="right" />
-            </Line>
-          </LineChart>
         </div>
         <div cds-layout="col@sm:12">
           <LineChart
