@@ -21,8 +21,6 @@ export function RenderStreamState(props: EEGStreamProps) {
   return (
     <div>
       <h1>
-        {/* <span className="word">{attention}</span>
-        <span className="word">{meditation}</span> */}
         <span className="word">Signal {signalQuality}</span>
       </h1>
     </div>
@@ -262,7 +260,7 @@ export class EEGStream extends BaseComponent<
             <YAxis domain={[0, 100]}>
               <Label angle={-90} value='attention' position='insideLeft' style={{ textAnchor: 'middle' }} />
             </YAxis>
-            <Tooltip />
+            {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
             <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0}>
               <LabelList dataKey="value" position="right" />
@@ -284,7 +282,7 @@ export class EEGStream extends BaseComponent<
             <YAxis domain={[0, 100]}>
               <Label angle={-90} value='meditation' position='insideLeft' style={{ textAnchor: 'middle' }} />
             </YAxis>
-            <Tooltip />
+            {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
             <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0}>
               <LabelList dataKey="value" position="insideRight" />
