@@ -114,9 +114,9 @@ export class EEGStream extends BaseComponent<
     const handler = (streamVal: EEGEvent) => {
       switch (streamVal.type) {
         case 0x02: {
-          let c = this.state.signalQualityData.concat({ date: new Date(), value: streamVal.signalQuality, subject: "", index: 0 })
-          if (c.length > 200) {
-            c.shift()
+          let c = [...this.state.signalQualityData, { date: new Date(), value: streamVal.signalQuality, subject: "", index: 0 }]
+          if (c.length > 60) {
+            c = c.slice(1)
           }
           this.setState({
             signalQualityData: c,
@@ -124,9 +124,9 @@ export class EEGStream extends BaseComponent<
         }
           break;
         case 0x04: {
-          let c = this.state.attentionData.concat({ date: new Date(), value: streamVal.attention, subject: "", index: 0 })
-          if (c.length > 200) {
-            c.shift()
+          let c = [...this.state.attentionData, { date: new Date(), value: streamVal.attention, subject: "", index: 0 }]
+          if (c.length > 60) {
+            c = c.slice(1)
           }
           this.setState({
             attentionData: c,
@@ -134,9 +134,9 @@ export class EEGStream extends BaseComponent<
         }
           break;
         case 0x05: {
-          let c = this.state.meditationData.concat({ date: new Date(), value: streamVal.meditation, subject: "", index: 0 })
-          if (c.length > 200) {
-            c.shift()
+          let c = [...this.state.meditationData, { date: new Date(), value: streamVal.meditation, subject: "", index: 0 }]
+          if (c.length > 60) {
+            c = c.slice(1)
           }
           this.setState({
             meditationData: c,
@@ -243,7 +243,7 @@ export class EEGStream extends BaseComponent<
         <div cds-layout="col@sm:12">
           <LineChart
             width={1400}
-            height={200}
+            height={100}
             data={this.state.signalQualityData}
             margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
           >
