@@ -289,7 +289,7 @@ export class EEGStream extends BaseComponent<
             </Line>
           </LineChart>
         </div>
-        <div cds-layout="col@sm:12">
+        {/* <div cds-layout="col@sm:12">
           <LineChart
             width={1400}
             height={200}
@@ -304,7 +304,7 @@ export class EEGStream extends BaseComponent<
             <CartesianGrid stroke="#f5f5f5" />
             <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} />
           </LineChart>
-        </div>
+        </div> */}
         <RadarChart cx={300} cy={250} outerRadius={150} width={500} height={500} data={this.state.eegPowerData}>
           <PolarGrid gridType='circle' />
           <PolarAngleAxis dataKey="subject" />
