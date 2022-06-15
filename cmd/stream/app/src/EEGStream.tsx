@@ -262,7 +262,7 @@ export class EEGStream extends BaseComponent<
             </YAxis>
             {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
-            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false}>
+            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false} dot={false}>
               {/* <LabelList dataKey="value" position="right" /> */}
             </Line>
           </LineChart>
@@ -284,7 +284,7 @@ export class EEGStream extends BaseComponent<
             </YAxis>
             {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
-            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false}>
+            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false} dot={false}>
               {/* <LabelList dataKey="value" position="insideRight" /> */}
             </Line>
           </LineChart>
