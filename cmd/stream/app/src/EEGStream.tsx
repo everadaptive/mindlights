@@ -231,7 +231,7 @@ export class EEGStream extends BaseComponent<
 
   render() {
     const formatXAxis = (tickItem: Date, index: any) => {
-      return tickItem.toLocaleTimeString();
+      return tickItem.getMinutes()+":"+tickItem.getSeconds();
     }
 
     return (
@@ -263,7 +263,7 @@ export class EEGStream extends BaseComponent<
             {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
             <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0}>
-              <LabelList dataKey="value" position="right" />
+              {/* <LabelList dataKey="value" position="right" /> */}
             </Line>
           </LineChart>
         </div>
@@ -285,7 +285,7 @@ export class EEGStream extends BaseComponent<
             {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
             <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0}>
-              <LabelList dataKey="value" position="insideRight" />
+              {/* <LabelList dataKey="value" position="insideRight" /> */}
             </Line>
           </LineChart>
         </div>
