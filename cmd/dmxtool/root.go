@@ -22,7 +22,7 @@ var (
 	envPrefix = "MINDLIGHTS"
 
 	rootCmd = &cobra.Command{
-		Use:   "mindlights",
+		Use:   "mindedlights",
 		Short: "Use data from a Neurosky to control things",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well

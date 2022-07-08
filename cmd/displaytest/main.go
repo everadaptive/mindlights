@@ -4,6 +4,7 @@ import (
 	"github.com/everadaptive/mindlights/controller"
 	"github.com/everadaptive/mindlights/display"
 	"github.com/everadaptive/mindlights/udmx"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -57,6 +58,6 @@ func main() {
 
 	palette := controller.CustomPalette6()
 
-	c := controller.NewController(disp, nil, nil, palette)
-	c.DisplayTest()
+	c := controller.NewController(disp, nil, nil, palette, &zap.SugaredLogger{})
+	c.DisplayTest(100)
 }

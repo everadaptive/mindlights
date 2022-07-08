@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/everadaptive/mindlights/controller"
 	"go.uber.org/zap"
@@ -37,13 +38,25 @@ func NewNeurosky(bluetoothAddress string, name string, log *zap.SugaredLogger) (
 	}
 	log.Infow("connected to headset", "mac", bluetoothAddress, "name", name)
 
-	return &Neurosky{
+	n := Neurosky{
 		fd:               fd,
 		name:             name,
 		bluetoothAddress: bluetoothAddress,
 		scanning:         false,
 		log:              log,
-	}, nil
+	}
+	events := n.Start()
+	t1 := time.NewTimer(2 * time.Second)
+	select {
+	case timeout := <-t1.C:
+		n.log.Info("timed out: ", timeout)
+		n.Close()
+		return NewNeurosky(bluetoothAddress, name, log)
+	case sucess := <-events:
+		n.log.Info("reading from headset: ", sucess)
+	}
+
+	return &n, nil
 }
 
 func (b *Neurosky) Read(p []byte) (n int, err error) {
@@ -81,6 +94,7 @@ func (b *Neurosky) Stop() {
 func (b *Neurosky) Close() {
 	b.Stop()
 	unix.Close(b.fd)
+	time.Sleep(1 * time.Second)
 }
 
 func (b *Neurosky) ParseMindflex(data []byte, events chan controller.MindflexEvent) {
