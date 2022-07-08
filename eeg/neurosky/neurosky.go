@@ -104,7 +104,7 @@ func (b *Neurosky) ParseMindflex(data []byte, events chan controller.MindflexEve
 			length = 1
 		}
 
-		b.log.Debugw("received packet", "mac", b.bluetoothAddress, "name", b.name, "length", len(data), "type", fmt.Sprintf("0x%02x", code))
+		// b.log.Debugw("received packet", "mac", b.bluetoothAddress, "name", b.name, "length", len(data), "type", fmt.Sprintf("0x%02x", code))
 
 		if length > 0 {
 			// b.log.Printf("EXCODE level: %d, CODE: 0x%02X, length: %d", extendedCodeLevel, code, length)

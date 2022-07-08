@@ -1,7 +1,6 @@
 package display
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/everadaptive/mindlights/udmx"
@@ -64,16 +63,12 @@ func NewUDmxDisplay(size int, device udmx.DmxDevice, channels DmxChannels) UDmxD
 }
 
 func (d UDmxDisplay) SetColor(id int, color colorful.Color) error {
-	if id < 0 || id > d.Size {
-		return fmt.Errorf("error setting color, index is out of bounds")
-	}
-
 	r, g, b := color.RGB255()
 	if d.Channels.MasterBrightness > 0 {
 		d.device.SetChannelColor(uint16(d.Channels.MasterBrightness), 255)
 	}
 
-	log.Printf("id: %d first: %d r: %d g: %d b: %d", id, d.Channels.FirstRGBChannel, d.r, d.g, d.b)
+	// log.Printf("id: %d first: %d r: %d g: %d b: %d", id, d.Channels.FirstRGBChannel, d.r, d.g, d.b)
 	d.device.SetChannelColor(uint16(3*id+d.Channels.FirstRGBChannel+d.r), uint16(r))
 	d.device.SetChannelColor(uint16(3*id+d.Channels.FirstRGBChannel+d.g), uint16(g))
 	d.device.SetChannelColor(uint16(3*id+d.Channels.FirstRGBChannel+d.b), uint16(b))

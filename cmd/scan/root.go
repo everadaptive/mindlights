@@ -52,7 +52,7 @@ var (
 				headsets  map[string]*neurosky.Neurosky
 			)
 			logConfig := zap.NewDevelopmentConfig()
-			logConfig.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+			logConfig.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 			logger, _ := logConfig.Build()
 			defer logger.Sync() // flushes buffer, if any
 			log = logger.Sugar()
@@ -98,6 +98,7 @@ var (
 
 			palette = controller.CustomPalette6()
 
+			var wg sync.WaitGroup
 			headsets = make(map[string]*neurosky.Neurosky)
 
 			for _, h := range eegHeadsets {
@@ -108,17 +109,13 @@ var (
 
 				headsets[h.Name] = neurosky
 				headsets[h.Name].Start()
-			}
 
-			var wg sync.WaitGroup
-
-			for name, hs := range headsets {
 				wg.Add(1)
-				c := controller.NewController(disp, hs.EventsChan, csvWriter, palette, log.Named(name))
-				go func() {
-					c.Start()
+				c := controller.NewController(disp, headsets[h.Name].EventsChan, csvWriter, palette, log.Named(h.Name))
+				go func(config eegHeadsetConfig) {
+					c.Start(config.Display.Start)
 					wg.Done()
-				}()
+				}(h)
 			}
 
 			signalChan := make(chan os.Signal)

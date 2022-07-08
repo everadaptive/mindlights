@@ -42,6 +42,6 @@ func (d *FTDIDMXDevice) SetMultiple(values []byte) {
 
 func (d *FTDIDMXDevice) Render() {
 	// Send!
-	log.Print("Rendering")
+	// log.Print("Rendering")
 	d.device.Render()
 }

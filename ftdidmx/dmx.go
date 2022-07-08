@@ -132,7 +132,7 @@ func (dmx *DMX) Render() error {
 
 	time.Sleep(DMX_MAB * time.Nanosecond)
 
-	fmt.Println(dmx.frame[0:])
+	// fmt.Println(dmx.frame[0:])
 
 	// Write dmx frame.
 	dmx.serial.Write(dmx.frame[0:])

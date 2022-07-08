@@ -10,12 +10,13 @@ import (
 )
 
 type Controller struct {
-	display   display.ColorDisplay
-	events    chan MindflexEvent
-	csvWriter *csv.Writer
-	palette   []colorful.Color
-	colors    []colorful.Color
-	log       *zap.SugaredLogger
+	display       display.ColorDisplay
+	events        chan MindflexEvent
+	csvWriter     *csv.Writer
+	palette       []colorful.Color
+	colors        []colorful.Color
+	displayOffset int
+	log           *zap.SugaredLogger
 }
 
 func NewController(display display.ColorDisplay, events chan MindflexEvent, csvWriter *csv.Writer, palette []colorful.Color, log *zap.SugaredLogger) Controller {
@@ -28,7 +29,9 @@ func NewController(display display.ColorDisplay, events chan MindflexEvent, csvW
 	}
 }
 
-func (c *Controller) Start() {
+func (c *Controller) Start(displayOffset int) {
+	c.displayOffset = displayOffset
+
 	if c.csvWriter != nil {
 		d2 := EEGFullData{}
 		if err := c.csvWriter.Write(d2.GetHeaders()); err != nil {
@@ -45,7 +48,7 @@ func (c *Controller) Start() {
 }
 
 func (c *Controller) DoWork(v MindflexEvent) {
-	c.log.Debugw("packet received", "source", v.Source, "signal", v.SignalQuality, "attention", v.Attention, "meditation", v.Meditation)
+	// c.log.Debugw("packet received", "source", v.Source, "signal", v.SignalQuality, "attention", v.Attention, "meditation", v.Meditation)
 
 	switch v.Type {
 	case POOR_SIGNAL:
@@ -58,13 +61,13 @@ func (c *Controller) DoWork(v MindflexEvent) {
 			v.Attention = 99
 		}
 
-		// c.colors = append(c.colors, c.palette[v.Attention])[1:]
+		c.colors = append(c.colors, c.palette[v.Attention])[1:]
 
-		// for i := 0; i < c.display.DisplaySize(); i++ {
-		// 	c.display.SetColor(i, c.colors[i])
-		// }
+		for i := 0; i < c.display.DisplaySize(); i++ {
+			c.display.SetColor(i, c.colors[i])
+		}
 
-		// c.display.Render()
+		c.display.Render()
 
 		// red := 2.5 * float64(v.Attention)
 		// c.display.SetSingleColor(colorful.Color{
@@ -80,13 +83,13 @@ func (c *Controller) DoWork(v MindflexEvent) {
 			v.Meditation = 99
 		}
 
-		c.colors = append(c.colors, c.palette[v.Meditation])[1:]
+		// c.colors = append(c.colors, c.palette[v.Meditation])[1:]
 
-		for i := 0; i < c.display.DisplaySize(); i++ {
-			c.display.SetColor(i, c.colors[i])
-		}
+		// for i := 0; i < c.display.DisplaySize(); i++ {
+		// 	c.display.SetColor(c.displayOffset+i, c.colors[i])
+		// }
 
-		c.display.Render()
+		// c.display.Render()
 		// red := 2.5 * float64(v.Meditation)
 		// c.display.SetSingleColor(colorful.Color{
 		// 	R: 0,
