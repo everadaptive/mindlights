@@ -52,6 +52,25 @@ func (c *Controller) DoWork(v MindflexEvent) {
 
 	switch v.Type {
 	case POOR_SIGNAL:
+		if v.SignalQuality > 0 {
+			c.log.Infow("low signal quality", "signal_quality", v.SignalQuality)
+			c.display.SetSingleColor(colorful.Color{
+				R: 255,
+				G: 0,
+				B: 0,
+			})
+
+			c.display.Render()
+
+			time.Sleep(100 * time.Millisecond)
+			c.display.SetSingleColor(colorful.Color{
+				R: 0,
+				G: 0,
+				B: 0,
+			})
+
+			c.display.Render()
+		}
 		break
 	case ATTENTION:
 		if v.Attention == 0 {

@@ -52,8 +52,8 @@ func NewNeurosky(bluetoothAddress string, name string, log *zap.SugaredLogger) (
 		n.log.Info("timed out: ", timeout)
 		n.Close()
 		return NewNeurosky(bluetoothAddress, name, log)
-	case sucess := <-events:
-		n.log.Info("reading from headset: ", sucess)
+	case <-events:
+		n.log.Info("reading from headset")
 	}
 
 	return &n, nil
