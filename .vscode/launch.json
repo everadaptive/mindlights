@@ -50,7 +50,7 @@
             ],
         },
         {
-            "name": "HEADSET-03+dmx",
+            "name": "HEADSET-03+ftdidmx",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -58,6 +58,16 @@
             "args": [
                 "--bluetooth-address=98:D3:31:80:7B:3D",
                 "--display=ftdidmx"
+            ],
+        },        
+        {
+            "name": "HEADSET-03+config",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/scan",
+            "args": [
+                "--config=${workspaceFolder}/hack/headset-03.yaml"
             ],
         },
         {

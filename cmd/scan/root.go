@@ -11,6 +11,7 @@ import (
 	"github.com/everadaptive/mindlights/controller"
 	"github.com/everadaptive/mindlights/display"
 	"github.com/everadaptive/mindlights/eeg/neurosky"
+	"github.com/everadaptive/mindlights/handler"
 	"github.com/everadaptive/mindlights/udmx"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/spf13/cobra"
@@ -30,6 +31,7 @@ var (
 	displayRGBOrder         string
 	displayMasterBrightness int
 	displayFirstRGB         int
+	visualization           string
 	bluetoothAddress        string
 	eegHeadsets             []eegHeadsetConfig
 	log                     *zap.SugaredLogger
@@ -110,8 +112,17 @@ var (
 				headsets[h.Name] = neurosky
 				headsets[h.Name].Start()
 
+				var eegHandler handler.EEGHandler
+				if visualization == "moving-head" {
+					eegHandler = handler.NewAMovingHeadHandler(disp, log.Named("eegHandler"), palette, h.Display.Start)
+				} else if visualization == "attention-light" {
+					eegHandler = handler.NewAttentionLightHandler(disp, log.Named("eegHandler"), palette, h.Display.Start)
+				} else if visualization == "meditation-light" {
+					eegHandler = handler.NewMeditationLightHandler(disp, log.Named("eegHandler"), palette, h.Display.Start, h.Display.Size)
+				}
+
 				wg.Add(1)
-				c := controller.NewController(disp, headsets[h.Name].EventsChan, csvWriter, palette, log.Named(h.Name))
+				c := controller.NewController(eegHandler, headsets[h.Name].EventsChan, csvWriter, palette, log.Named(h.Name))
 				go func(config eegHeadsetConfig) {
 					c.Start(config.Display.Start)
 					wg.Done()
@@ -152,6 +163,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&displayRGBOrder, "display-rgb-order", "rgb", "display color order 'rgb', 'rgbw'")
 	rootCmd.PersistentFlags().IntVar(&displayMasterBrightness, "display-master-brightness", 0, "display master brightness channel")
 	rootCmd.PersistentFlags().IntVar(&displayFirstRGB, "display-first-rgb", 1, "display first rgb channel")
+	rootCmd.PersistentFlags().StringVar(&visualization, "visualization", "attention-light", "'attention-light', 'meditation-light', 'moving-head'")
 }
 
 func initializeConfig(cmd *cobra.Command) error {

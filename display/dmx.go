@@ -68,7 +68,7 @@ func (d UDmxDisplay) SetColor(id int, color colorful.Color) error {
 		d.device.SetChannelColor(uint16(d.Channels.MasterBrightness), 255)
 	}
 
-	// log.Printf("id: %d first: %d r: %d g: %d b: %d", id, d.Channels.FirstRGBChannel, d.r, d.g, d.b)
+	// log.Printf("id: %d first: %d r: %d g: %d b: %d, r: %d, g: %d, b: %d", id, d.Channels.FirstRGBChannel, d.r, d.g, d.b, r, g, b)
 	d.device.SetChannelColor(uint16(3*id+d.Channels.FirstRGBChannel+d.r), uint16(r))
 	d.device.SetChannelColor(uint16(3*id+d.Channels.FirstRGBChannel+d.g), uint16(g))
 	d.device.SetChannelColor(uint16(3*id+d.Channels.FirstRGBChannel+d.b), uint16(b))
@@ -79,18 +79,26 @@ func (d UDmxDisplay) SetColor(id int, color colorful.Color) error {
 func (d UDmxDisplay) SetSingleColor(color colorful.Color) error {
 	for i := 0; i < d.Size; i++ {
 		r, g, b := color.RGB255()
+		if d.Channels.MasterBrightness > 0 {
+			d.device.SetChannelColor(uint16(d.Channels.MasterBrightness), 255)
+		}
 
-		if r != 0 {
-			d.device.SetChannelColor(uint16(3*i+d.Channels.FirstRGBChannel+d.r), uint16(r))
-		}
-		if g != 0 {
-			d.device.SetChannelColor(uint16(3*i+d.Channels.FirstRGBChannel+d.g), uint16(g))
-		}
-		if b != 0 {
-			d.device.SetChannelColor(uint16(3*i+d.Channels.FirstRGBChannel+d.b), uint16(b))
-		}
+		// if r != 0 {
+		d.device.SetChannelColor(uint16(3*i+d.Channels.FirstRGBChannel+d.r), uint16(r))
+		// }
+		// if g != 0 {
+		d.device.SetChannelColor(uint16(3*i+d.Channels.FirstRGBChannel+d.g), uint16(g))
+		// }
+		// if b != 0 {
+		d.device.SetChannelColor(uint16(3*i+d.Channels.FirstRGBChannel+d.b), uint16(b))
+		// }
 	}
 
+	return nil
+}
+
+func (d UDmxDisplay) SetChannel(channel uint16, value uint16) error {
+	d.device.SetChannelColor(channel, value)
 	return nil
 }
 

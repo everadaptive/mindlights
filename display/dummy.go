@@ -22,4 +22,8 @@ func (d DummyDisplay) DisplaySize() int {
 	return 1
 }
 
+func (d DummyDisplay) SetChannel(channel uint16, value uint16) error {
+	return nil
+}
+
 func (d DummyDisplay) Render() {}

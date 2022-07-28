@@ -1,4 +1,4 @@
-package controller
+package neurosky
 
 import (
 	"github.com/dnlo/struct2csv"

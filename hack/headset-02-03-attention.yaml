@@ -1,0 +1,26 @@
+# bluetoothAddress: "98:D3:31:80:7B:67"
+# display: udmx
+display: udmx
+display-size: 16
+# udmx-pid: 0x0403
+# udmx-vid: 0x6001
+display-rgb-order: rgb
+display-master-brightness: 0
+display-first-rgb: 1
+visualization: "meditation-light"
+
+eeg_headsets:
+  - name: headset-02
+    bluetoothAddress: "98:D3:31:80:7B:67"
+    display:
+      size: 8
+      rgbOrder: rgb
+      brightness: 0
+      start: 0
+  - name: headset-03
+    bluetoothAddress: "98:D3:31:80:7B:3D"
+    display:
+      size: 8
+      rgbOrder: rgb
+      brightness: 0
+      start: 8  

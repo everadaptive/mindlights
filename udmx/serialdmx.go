@@ -35,7 +35,7 @@ func (d *SerialDMXDevice) SetChannelColor(channel uint16, value uint16) {
 		log.Println(err)
 	}
 
-	log.Printf("Setting channel %d to %d", int(channel), byte(value))
+	// log.Printf("Setting channel %d to %d", int(channel), byte(value))
 }
 
 func (d *SerialDMXDevice) SetMultiple(values []byte) {

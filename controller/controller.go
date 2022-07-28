@@ -2,144 +2,57 @@ package controller
 
 import (
 	"encoding/csv"
-	"time"
 
-	"github.com/everadaptive/mindlights/display"
+	"github.com/everadaptive/mindlights/eeg/neurosky"
+	"github.com/everadaptive/mindlights/handler"
 	"github.com/lucasb-eyer/go-colorful"
 	"go.uber.org/zap"
 )
 
 type Controller struct {
-	display       display.ColorDisplay
-	events        chan MindflexEvent
-	csvWriter     *csv.Writer
-	palette       []colorful.Color
-	colors        []colorful.Color
-	displayOffset int
-	log           *zap.SugaredLogger
+	handler   handler.EEGHandler
+	events    chan neurosky.MindflexEvent
+	csvWriter *csv.Writer
+	log       *zap.SugaredLogger
 }
 
-func NewController(display display.ColorDisplay, events chan MindflexEvent, csvWriter *csv.Writer, palette []colorful.Color, log *zap.SugaredLogger) Controller {
+func NewController(handler handler.EEGHandler, events chan neurosky.MindflexEvent, csvWriter *csv.Writer, palette []colorful.Color, log *zap.SugaredLogger) Controller {
 	return Controller{
-		display:   display,
+		handler:   handler,
 		events:    events,
 		csvWriter: csvWriter,
-		palette:   palette,
 		log:       log,
 	}
 }
 
 func (c *Controller) Start(displayOffset int) {
-	c.displayOffset = displayOffset
-
 	if c.csvWriter != nil {
-		d2 := EEGFullData{}
+		d2 := neurosky.EEGFullData{}
 		if err := c.csvWriter.Write(d2.GetHeaders()); err != nil {
 			c.log.Fatal("error writing headers to csv:", err)
 		}
 		c.csvWriter.Flush()
 	}
 
-	c.colors = make([]colorful.Color, c.display.DisplaySize())
+	c.handler.Start()
 
 	for v := range c.events {
 		c.DoWork(v)
 	}
 }
 
-func (c *Controller) DoWork(v MindflexEvent) {
+func (c *Controller) DoWork(v neurosky.MindflexEvent) {
 	// c.log.Debugw("packet received", "source", v.Source, "signal", v.SignalQuality, "attention", v.Attention, "meditation", v.Meditation)
 
 	switch v.Type {
-	case POOR_SIGNAL:
-		if v.SignalQuality > 0 {
-			c.log.Infow("low signal quality", "signal_quality", v.SignalQuality)
-			c.display.SetSingleColor(colorful.Color{
-				R: 255,
-				G: 0,
-				B: 0,
-			})
-
-			c.display.Render()
-
-			time.Sleep(100 * time.Millisecond)
-			c.display.SetSingleColor(colorful.Color{
-				R: 0,
-				G: 0,
-				B: 0,
-			})
-
-			c.display.Render()
-		}
+	case neurosky.POOR_SIGNAL:
+		c.handler.PoorSignal(v)
 		break
-	case ATTENTION:
-		if v.Attention == 0 {
-			v.Attention = 1
-		}
-		if v.Attention == 100 {
-			v.Attention = 99
-		}
-
-		c.colors = append(c.colors, c.palette[v.Attention])[1:]
-
-		for i := 0; i < c.display.DisplaySize(); i++ {
-			c.display.SetColor(i, c.colors[i])
-		}
-
-		c.display.Render()
-
-		// red := 2.5 * float64(v.Attention)
-		// c.display.SetSingleColor(colorful.Color{
-		// 	R: red,
-		// 	G: 0,
-		// 	B: 0,
-		// })
-	case MEDITATION:
-		if v.Meditation == 0 {
-			v.Meditation = 1
-		}
-		if v.Meditation == 100 {
-			v.Meditation = 99
-		}
-
-		// c.colors = append(c.colors, c.palette[v.Meditation])[1:]
-
-		// for i := 0; i < c.display.DisplaySize(); i++ {
-		// 	c.display.SetColor(c.displayOffset+i, c.colors[i])
-		// }
-
-		// c.display.Render()
-		// red := 2.5 * float64(v.Meditation)
-		// c.display.SetSingleColor(colorful.Color{
-		// 	R: 0,
-		// 	G: 0,
-		// 	B: red,
-		// })
-	case EEG_POWER:
+	case neurosky.ATTENTION:
+		c.handler.Attention(v)
+	case neurosky.MEDITATION:
+		c.handler.Meditation(v)
+	case neurosky.EEG_POWER:
 		break
-	}
-}
-
-func (c *Controller) DisplayTest(total_steps int) {
-	colors := make([]colorful.Color, c.display.DisplaySize())
-	col, _ := colorful.Hex("000000")
-	for i := 0; i < c.display.DisplaySize(); i++ {
-		colors = colors[1:]
-		colors = append(colors, col)
-	}
-
-	for i := 0; i <= total_steps; i++ {
-		c.log.Infow("step", i, "total_steps", total_steps, "percent", i/total_steps, "colors", colors)
-
-		colors = colors[1:]
-		colors = append(colors, c.palette[i])
-
-		for k := 0; k < c.display.DisplaySize(); k++ {
-			c.display.SetColor(k, colors[k])
-		}
-
-		c.display.Render()
-
-		time.Sleep(50 * time.Millisecond)
 	}
 }

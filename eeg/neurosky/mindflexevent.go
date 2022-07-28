@@ -1,4 +1,4 @@
-package controller
+package neurosky
 
 type MindflexType byte
 
