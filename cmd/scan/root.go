@@ -116,7 +116,7 @@ var (
 				if visualization == "moving-head" {
 					eegHandler = handler.NewAMovingHeadHandler(disp, log.Named("eegHandler"), palette, h.Display.Start)
 				} else if visualization == "attention-light" {
-					eegHandler = handler.NewAttentionLightHandler(disp, log.Named("eegHandler"), palette, h.Display.Start)
+					eegHandler = handler.NewAttentionLightHandler(disp, log.Named("eegHandler"), palette, h.Display.Start, h.Display.Size)
 				} else if visualization == "meditation-light" {
 					eegHandler = handler.NewMeditationLightHandler(disp, log.Named("eegHandler"), palette, h.Display.Start, h.Display.Size)
 				}

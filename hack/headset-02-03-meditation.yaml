@@ -7,7 +7,7 @@ display-size: 16
 display-rgb-order: rgb
 display-master-brightness: 0
 display-first-rgb: 1
-visualization: "attention-light"
+visualization: "meditation-light"
 
 eeg_headsets:
   - name: headset-02

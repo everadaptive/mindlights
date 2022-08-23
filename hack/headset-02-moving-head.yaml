@@ -1,6 +1,6 @@
 # bluetoothAddress: "98:D3:31:80:7B:67"
 # display: udmx
-display: ftdidmx
+display: udmx
 display-size: 1
 # udmx-pid: 0x0403
 # udmx-vid: 0x6001
