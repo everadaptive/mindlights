@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/everadaptive/mindlights/display"
+	"github.com/everadaptive/mindlights/eeg/neurosky"
 	"github.com/lucasb-eyer/go-colorful"
 	"go.uber.org/zap"
 )
@@ -28,6 +29,9 @@ func NewDisplayTestHandler(display display.ColorDisplay, log *zap.SugaredLogger,
 		steps:         steps,
 	}
 }
+
+func (h *DisplayTestHandler) Stop()                        {}
+func (h *DisplayTestHandler) Any(v neurosky.MindflexEvent) {}
 
 func (h *DisplayTestHandler) Start() {
 	h.colors = make([]colorful.Color, h.display.DisplaySize())

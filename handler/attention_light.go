@@ -30,6 +30,9 @@ func NewAttentionLightHandler(display display.ColorDisplay, log *zap.SugaredLogg
 	}
 }
 
+func (h *AttentionLightHandler) Stop()                        {}
+func (h *AttentionLightHandler) Any(v neurosky.MindflexEvent) {}
+
 func (h *AttentionLightHandler) Start() {
 	h.colors = make([]colorful.Color, h.displaySize)
 }

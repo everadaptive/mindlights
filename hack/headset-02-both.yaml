@@ -1,7 +1,7 @@
 display: ftdidmx
 display-size: 8
-# udmx-pid: 0x0403
-# udmx-vid: 0x6001
+udmx-pid: 0x0403
+udmx-vid: 0x6001
 display-rgb-order: rgb
 display-master-brightness: 0
 display-first-rgb: 1
@@ -13,4 +13,4 @@ eeg_headsets:
     display:
       size: 8
       rgbOrder: rgb
-      brightness: 0  
+      brightness: 0

@@ -30,6 +30,9 @@ func NewMeditationLightHandler(display display.ColorDisplay, log *zap.SugaredLog
 	}
 }
 
+func (h *MeditationLightHandler) Stop()                        {}
+func (h *MeditationLightHandler) Any(v neurosky.MindflexEvent) {}
+
 func (h *MeditationLightHandler) Start() {
 	h.colors = make([]colorful.Color, h.displaySize)
 }

@@ -28,6 +28,9 @@ func NewAMovingHeadHandler(display display.ColorDisplay, log *zap.SugaredLogger,
 	}
 }
 
+func (h *MovingHeadHandler) Stop()                        {}
+func (h *MovingHeadHandler) Any(v neurosky.MindflexEvent) {}
+
 func (h *MovingHeadHandler) Start() {
 	h.colors = make([]colorful.Color, h.display.DisplaySize())
 }

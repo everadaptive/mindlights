@@ -1,4 +1,4 @@
-display: dmx
+display: dummy
 display-size: 8
 udmx-pid: 0x0403
 udmx-vid: 0x6001
@@ -6,6 +6,7 @@ display-rgb-order: rgb
 display-master-brightness: 6
 display-first-rgb: 8
 visualization: "moving-head"
+csv-out-file: "test.csv"
 
 eeg_headsets:
   - name: headset-03

@@ -44,15 +44,16 @@ func (c *Controller) Start(displayOffset int) {
 func (c *Controller) DoWork(v neurosky.MindflexEvent) {
 	// c.log.Debugw("packet received", "source", v.Source, "signal", v.SignalQuality, "attention", v.Attention, "meditation", v.Meditation)
 
+	c.handler.Any(v)
+
 	switch v.Type {
 	case neurosky.POOR_SIGNAL:
 		c.handler.PoorSignal(v)
-		break
 	case neurosky.ATTENTION:
 		c.handler.Attention(v)
 	case neurosky.MEDITATION:
 		c.handler.Meditation(v)
-	case neurosky.EEG_POWER:
+	case neurosky.EEG_RAW:
 		break
 	}
 }

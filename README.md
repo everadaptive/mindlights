@@ -1,5 +1,7 @@
 # MindLights v3.0
 
+MindLights is a toolit for using [NeuroSky EEGs](https://neurosky.com/biosensors/eeg-sensor/) to control lights using the DMX protocol
+
 ## Usage
 
 ## Building

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	dsp "github.com/eripe970/go-dsp-utils"
-	"github.com/everadaptive/mindlights/controller"
+	"github.com/everadaptive/mindlights/eeg/neurosky"
 	"github.com/vmware/transport-go/model"
 	"github.com/vmware/transport-go/service"
 )
@@ -29,11 +29,11 @@ const (
 // a request made through the Event Bus API like bus.RequestOnce() will be routed to HandleServiceRequest()
 // which will match the request's Request to the list of available service request types and return the response.
 type NeuroskyService struct {
-	events    chan controller.MindflexEvent
+	events    chan neurosky.MindflexEvent
 	rawValues []float64
 }
 
-func NewNeuroskyService(events chan controller.MindflexEvent) *NeuroskyService {
+func NewNeuroskyService(events chan neurosky.MindflexEvent) *NeuroskyService {
 	return &NeuroskyService{
 		events:    events,
 		rawValues: make([]float64, 2048),
@@ -53,15 +53,15 @@ func (ps *NeuroskyService) Init(core service.FabricServiceCore) error {
 		count := 0
 		for v := range ps.events {
 			switch v.Type {
-			case controller.POOR_SIGNAL:
+			case neurosky.POOR_SIGNAL:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskySignalChan), v, nil)
-			case controller.ATTENTION:
+			case neurosky.ATTENTION:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyAttentionChan), v, nil)
-			case controller.MEDITATION:
+			case neurosky.MEDITATION:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyMeditationChan), v, nil)
-			case controller.EEG_POWER:
+			case neurosky.EEG_POWER:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyEEGPowerChan), v, nil)
-			case controller.EEG_RAW:
+			case neurosky.EEG_RAW:
 				ps.rawValues = append(ps.rawValues[1:], float64(v.EEGRawPower))
 				if count%100 == 0 {
 					count = 0
@@ -73,10 +73,10 @@ func (ps *NeuroskyService) Init(core service.FabricServiceCore) error {
 					filt, _ := n.LowPassFilter(110)
 
 					fs, _ := filt.FrequencySpectrum()
-					f := []controller.ComplexValue{}
+					f := []neurosky.ComplexValue{}
 					for k := range fs.Frequencies {
 						if fs.Frequencies[k] < 110 {
-							f = append(f, controller.ComplexValue{Real: fs.Spectrum[k], Imaginary: fs.Frequencies[k]})
+							f = append(f, neurosky.ComplexValue{Real: fs.Spectrum[k], Imaginary: fs.Frequencies[k]})
 						}
 					}
 					v.EEGRawPowerFFT = f

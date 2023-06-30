@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/everadaptive/mindlights/controller"
 	"github.com/everadaptive/mindlights/display"
@@ -103,6 +104,7 @@ var (
 			var wg sync.WaitGroup
 			headsets = make(map[string]*neurosky.Neurosky)
 
+			startTime := time.Now().Unix()
 			for _, h := range eegHeadsets {
 				neurosky, err := neurosky.NewNeurosky(h.BluetoothAddress, h.Name, log.Named(h.Name))
 				if err != nil {
@@ -119,6 +121,9 @@ var (
 					eegHandler = handler.NewAttentionLightHandler(disp, log.Named("eegHandler"), palette, h.Display.Start, h.Display.Size)
 				} else if visualization == "meditation-light" {
 					eegHandler = handler.NewMeditationLightHandler(disp, log.Named("eegHandler"), palette, h.Display.Start, h.Display.Size)
+				} else if visualization == "csv" {
+					csvOutFile = fmt.Sprintf("%s-%d.csv", h.Name, startTime)
+					eegHandler = handler.NewCSVLoggerHandler(log.Named("eegHandler"), csvOutFile)
 				}
 
 				wg.Add(1)
