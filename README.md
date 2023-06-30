@@ -2,6 +2,9 @@
 
 MindLights is a toolit for using [NeuroSky EEGs](https://neurosky.com/biosensors/eeg-sensor/) to control lights using the DMX protocol
 
+<img alt="3 modified MindFlex headsets" src="assets/headsets.jpeg " height="200"/>
+<img alt="Color gradient showing Attention levels over time" src="assets/spectrum.jpeg " height="200"/>
+
 ## Usage
 
 ## Building
