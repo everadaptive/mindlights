@@ -1,0 +1,6 @@
+timestamp,source,attention,meditation,signal_quality,raw,low_alpha,high_alpha,low_beta,high_beta,low_gamma,high_gamma,delta,theta
+1664590092203,headset-03,0,0,0,0,7366,16704,57256,15877,16174,29113,33560,4285 # Parsed input from headset, band seperated
+1665803862618,headset-02,0,0,0,-2048,0,0,0,0,0,0,0,0 # Raw data, needs to be transformed with a DFT to be useful
+1664590092203,headset-03,66,0,0,0,0,0,0,0,0,0,0,0    # Attention from headet [0-100]
+1664590092203,headset-03,0,69,0,0,0,0,0,0,0,0,0,0    # Meditation from headset [0-100]
+1665803862707,headset-02,0,0,200,0,0,0,0,0,0,0,0,0   # Headset signal_quality 0 - good signal, 25 - one ear probe, 50 - bad placement of center, 200, no signal
