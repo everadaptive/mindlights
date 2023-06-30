@@ -8,7 +8,6 @@ require (
 	github.com/eripe970/go-dsp-utils v0.0.0-20220123162022-4563116e558a
 	github.com/google/gousb v1.1.2
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
