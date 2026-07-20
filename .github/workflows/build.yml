@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
 
@@ -20,13 +21,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libusb-1.0-0-dev libftdi1-dev
 
       - name: Build linux/amd64
-        run: CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o build/linux_amd64/mindlights ./cmd/scan
+        run: CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o build/mindlights-linux-amd64 ./cmd/scan
 
-      - name: Upload linux/amd64 artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: mindlights-linux-amd64
-          path: build/linux_amd64/mindlights
+          path: build/mindlights-linux-amd64
 
   build-macos:
     runs-on: macos-latest
@@ -41,10 +41,27 @@ jobs:
           go-version-file: go.mod
 
       - name: Build macOS/${{ matrix.goarch }}
-        run: CGO_ENABLED=0 GOOS=darwin GOARCH=${{ matrix.goarch }} go build -o build/macOS_${{ matrix.goarch }}/mindlights ./cmd/scan
+        run: CGO_ENABLED=0 GOOS=darwin GOARCH=${{ matrix.goarch }} go build -o build/mindlights-macos-${{ matrix.goarch }} ./cmd/scan
 
-      - name: Upload macOS/${{ matrix.goarch }} artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: mindlights-macos-${{ matrix.goarch }}
-          path: build/macOS_${{ matrix.goarch }}/mindlights
+          path: build/mindlights-macos-${{ matrix.goarch }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-linux, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
