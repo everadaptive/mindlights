@@ -1,9 +1,9 @@
 FROM debian:latest
 
-COPY mindlights .
+COPY build/linux_amd64/mindlights .
 COPY hack ./hack
 
 RUN apt update \
- && apt-get install --yes bluez libusb-1.0-0
+ && apt-get install --yes bluez libusb-1.0-0 libftdi1-2
 
 ENTRYPOINT [ "hack/scripts/run.sh" ]

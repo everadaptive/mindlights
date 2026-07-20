@@ -33,6 +33,8 @@ var (
 	displayMasterBrightness int
 	displayFirstRGB         int
 	visualization           string
+	oscHost                 string
+	oscPort                 int
 	bluetoothAddress        string
 	eegHeadsets             []eegHeadsetConfig
 	log                     *zap.SugaredLogger
@@ -124,6 +126,8 @@ var (
 				} else if visualization == "csv" {
 					csvOutFile = fmt.Sprintf("%s-%d.csv", h.Name, startTime)
 					eegHandler = handler.NewCSVLoggerHandler(log.Named("eegHandler"), csvOutFile)
+				} else if visualization == "osc" {
+					eegHandler = handler.NewOSCSenderHandler(oscHost, oscPort, log.Named("eegHandler"))
 				}
 
 				wg.Add(1)
@@ -168,7 +172,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&displayRGBOrder, "display-rgb-order", "rgb", "display color order 'rgb', 'rgbw'")
 	rootCmd.PersistentFlags().IntVar(&displayMasterBrightness, "display-master-brightness", 0, "display master brightness channel")
 	rootCmd.PersistentFlags().IntVar(&displayFirstRGB, "display-first-rgb", 1, "display first rgb channel")
-	rootCmd.PersistentFlags().StringVar(&visualization, "visualization", "attention-light", "'attention-light', 'meditation-light', 'moving-head'")
+	rootCmd.PersistentFlags().StringVar(&visualization, "visualization", "attention-light", "'attention-light', 'meditation-light', 'moving-head', 'osc'")
+	rootCmd.PersistentFlags().StringVar(&oscHost, "osc-host", "127.0.0.1", "OSC destination host")
+	rootCmd.PersistentFlags().IntVar(&oscPort, "osc-port", 9000, "OSC destination port")
 }
 
 func initializeConfig(cmd *cobra.Command) error {

@@ -3,22 +3,24 @@ cd /go/src/github.com/everadaptive/mindlights
 
 rm -rf build
 
-## linux
+## linux amd64
 apt update
-apt install -y libusb-1.0-0-dev
+apt install -y libusb-1.0-0-dev libftdi1-dev
 
 mkdir -p build/linux_amd64/
-GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o build/linux_amd64/mindlights .
+GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o build/linux_amd64/mindlights ./cmd/scan
 
+## linux arm7
 mkdir -p build/linux_arm7/
 dpkg --add-architecture armhf
 apt update
-apt install -y crossbuild-essential-armhf libusb-1.0-0-dev:armhf
-GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=1 CC=arm-linux-gnueabihf-gcc  go build -o build/linux_arm7/mindlights .
+apt install -y crossbuild-essential-armhf libusb-1.0-0-dev:armhf libftdi1-dev:armhf
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=1 CC=arm-linux-gnueabihf-gcc go build -o build/linux_arm7/mindlights ./cmd/scan
 
-## macOS
-curl -L -H "Authorization: Bearer QQ==" -o /tmp/libusb.tar.gz https://ghcr.io/v2/homebrew/core/libusb/blobs/sha256:e202da5a53b0955b4310805b09e9f4af3b73eed57de5ae0d44063e84dca5eafd 
-tar -zxf /tmp/libusb.tar.gz -C /tmp
+## macOS — USB/FTDI display backends are excluded on darwin via build tags,
+## so no CGO is required and no osxcross setup is needed.
+mkdir -p build/macOS_amd64/
+GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o build/macOS_amd64/mindlights ./cmd/scan
 
-mkdir -p build/macOS/
-OSXCROSS_NO_INCLUDE_PATH_WARNINGS=1 MACOSX_DEPLOYMENT_TARGET=10.10 CGO_LDFLAGS="-L/tmp/libusb/1.0.25/lib" CC=o64-clang CXX=o64-clang++ GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -o build/macOS/mindlights .
+mkdir -p build/macOS_arm64/
+GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o build/macOS_arm64/mindlights ./cmd/scan
