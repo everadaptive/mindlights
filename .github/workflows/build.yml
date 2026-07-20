@@ -41,7 +41,9 @@ jobs:
           go-version-file: go.mod
 
       - name: Build macOS/${{ matrix.goarch }}
-        run: CGO_ENABLED=0 GOOS=darwin GOARCH=${{ matrix.goarch }} go build -o build/mindlights-macos-${{ matrix.goarch }} ./cmd/scan
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "11.0"
+        run: CGO_ENABLED=1 GOOS=darwin GOARCH=${{ matrix.goarch }} go build -o build/mindlights-macos-${{ matrix.goarch }} ./cmd/scan
 
       - uses: actions/upload-artifact@v4
         with:
