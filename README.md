@@ -75,11 +75,21 @@ nix-shell --run "CGO_ENABLED=1 go build -o build/linux_amd64/mindlights ./cmd/sc
 
 ### macOS
 
-Pair the headset in System Settings → Bluetooth. It will appear as `/dev/tty.<name>-SerialPort`. Use that path as `bluetoothAddress` in your config.
+Pair the headset in System Settings → Bluetooth. It will appear as both
+`/dev/tty.<name>-SerialPort` and `/dev/cu.<name>-SerialPort`. Use the
+**`/dev/cu.*`** path as `bluetoothAddress` in your config — the `cu.*`
+(call-out) node is the correct one for connecting *to* a device. The
+`tty.*` node is the dial-in device and blocks on carrier-detect, so reads
+may never return data.
 
 ```bash
-CGO_ENABLED=0 go build -o mindlights ./cmd/scan
+CGO_ENABLED=1 MACOSX_DEPLOYMENT_TARGET=11.0 go build -o mindlights ./cmd/scan
 ```
+
+> Build with `CGO_ENABLED=1` on macOS. A pure-Go (`CGO_ENABLED=0`) binary
+> can crash at startup with a dyld `clock_gettime` error on recent macOS,
+> since Go's darwin runtime expects to reach the system calls through
+> libSystem.
 
 ### Docker (cross-compile all platforms)
 

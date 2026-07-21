@@ -113,8 +113,12 @@ var (
 					log.Fatal(err)
 				}
 
+				// NewNeurosky already started the reader goroutine and
+				// populated EventsChan. Do not call Start() again here: a
+				// second reader would race the first on the same serial
+				// port, splitting the byte stream between two scanners and
+				// corrupting every packet.
 				headsets[h.Name] = neurosky
-				headsets[h.Name].Start()
 
 				var eegHandler handler.EEGHandler
 				if visualization == "moving-head" {
@@ -138,7 +142,7 @@ var (
 				}(h)
 			}
 
-			signalChan := make(chan os.Signal)
+			signalChan := make(chan os.Signal, 1)
 			signal.Notify(signalChan, os.Interrupt)
 
 			go func() {

@@ -11,8 +11,10 @@ import (
 )
 
 // Neurosky connects via a Bluetooth serial port.
-// On macOS, pair the headset and use the serial device path
-// (e.g. /dev/tty.HEADSET02-SerialPort) as the bluetoothAddress in config.
+// On macOS, pair the headset and use the *call-out* serial device path
+// (e.g. /dev/cu.HEADSET02-SerialPort) as the bluetoothAddress in config.
+// Use the cu.* node, not tty.*: the tty.* node is the dial-in device and
+// blocks on modem carrier-detect, so outbound reads may never see data.
 type Neurosky struct {
 	port       serial.Port
 	name       string
