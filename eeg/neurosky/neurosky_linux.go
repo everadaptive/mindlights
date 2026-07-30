@@ -24,18 +24,25 @@ type Neurosky struct {
 }
 
 func NewNeurosky(bluetoothAddress string, name string, log *zap.SugaredLogger) (*Neurosky, error) {
-	fd, err := unix.Socket(syscall.AF_BLUETOOTH, syscall.SOCK_STREAM, unix.BTPROTO_RFCOMM)
-	if err != nil {
-		return nil, err
-	}
-
 	mac := str2ba(bluetoothAddress)
 	addr := &unix.SockaddrRFCOMM{Addr: mac, Channel: 1}
 
-	log.Infow("connecting to headset", "mac", bluetoothAddress, "name", name)
-	err = unix.Connect(fd, addr)
-	if err != nil {
-		return nil, err
+	var fd int
+	var err error
+	for {
+		fd, err = unix.Socket(syscall.AF_BLUETOOTH, syscall.SOCK_STREAM, unix.BTPROTO_RFCOMM)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Infow("connecting to headset", "mac", bluetoothAddress, "name", name)
+		err = unix.Connect(fd, addr)
+		if err == nil {
+			break
+		}
+		unix.Close(fd)
+		log.Infow("headset not reachable, retrying in 3s", "mac", bluetoothAddress, "error", err)
+		time.Sleep(3 * time.Second)
 	}
 	log.Infow("connected to headset", "mac", bluetoothAddress, "name", name)
 

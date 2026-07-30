@@ -8,7 +8,7 @@ export interface AppState {
 
 export default class App extends BaseComponent<any, AppState> {
   // simple stream is broadcasting on this channel over at transport-bus.io
-  private baseStreamChannel = "HEADSET-03";
+  private baseStreamChannel = "headset-02";
 
   constructor(props?: any) {
     super(props);
@@ -36,7 +36,7 @@ export default class App extends BaseComponent<any, AppState> {
             connected: false
           });
         },
-        "localhost",
+        window.location.hostname,
         30080,
         "/ws",
         false,

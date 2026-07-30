@@ -6,3 +6,11 @@ output/
 hack/data/*.csv
 
 **/*.csv
+
+build/linux_amd64/
+build/linux_arm64/
+build/linux_arm7/
+build/macOS/
+build/macOS_amd64/
+build/macOS_arm64/
+build/node_modules/

@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"go.uber.org/zap"
+
 	dsp "github.com/eripe970/go-dsp-utils"
 	"github.com/everadaptive/mindlights/eeg/neurosky"
+	"github.com/everadaptive/mindlights/handler"
 	"github.com/vmware/transport-go/model"
 	"github.com/vmware/transport-go/service"
 )
@@ -29,25 +32,33 @@ const (
 // a request made through the Event Bus API like bus.RequestOnce() will be routed to HandleServiceRequest()
 // which will match the request's Request to the list of available service request types and return the response.
 type NeuroskyService struct {
-	events    chan neurosky.MindflexEvent
-	rawValues []float64
+	events      chan neurosky.MindflexEvent
+	headsetName string
+	osc         *handler.OSCSenderHandler
+	rawValues   []float64
 }
 
-func NewNeuroskyService(events chan neurosky.MindflexEvent) *NeuroskyService {
-	return &NeuroskyService{
-		events:    events,
-		rawValues: make([]float64, 2048),
+func NewNeuroskyService(events chan neurosky.MindflexEvent, headsetName string, oscHost string, oscPort int) *NeuroskyService {
+	svc := &NeuroskyService{
+		events:      events,
+		headsetName: headsetName,
+		rawValues:   make([]float64, 2048),
 	}
+	if oscHost != "" {
+		logger, _ := zap.NewDevelopment()
+		svc.osc = handler.NewOSCSenderHandler(oscHost, oscPort, logger.Sugar())
+	}
+	return svc
 }
 
 // Init will fire when the service is being registered by the fabric, it passes a reference of the same core
 // Passed through when implementing HandleServiceRequest
 func (ps *NeuroskyService) Init(core service.FabricServiceCore) error {
-	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskySignalChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskySignalChan))
-	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyAttentionChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyAttentionChan))
-	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyMeditationChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyMeditationChan))
-	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyEEGPowerChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyEEGPowerChan))
-	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", "HEADSET-03", NeuroskyEEGRawChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", "HEADSET-03", NeuroskyEEGRawChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", ps.headsetName, NeuroskySignalChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", ps.headsetName, NeuroskySignalChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", ps.headsetName, NeuroskyAttentionChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", ps.headsetName, NeuroskyAttentionChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", ps.headsetName, NeuroskyMeditationChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", ps.headsetName, NeuroskyMeditationChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", ps.headsetName, NeuroskyEEGPowerChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", ps.headsetName, NeuroskyEEGPowerChan))
+	core.Bus().GetChannelManager().CreateChannel(fmt.Sprintf("%s/%s", ps.headsetName, NeuroskyEEGRawChan)).SetGalactic(fmt.Sprintf("/topic/%s/%s", ps.headsetName, NeuroskyEEGRawChan))
 
 	go func() {
 		count := 0
@@ -55,12 +66,24 @@ func (ps *NeuroskyService) Init(core service.FabricServiceCore) error {
 			switch v.Type {
 			case neurosky.POOR_SIGNAL:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskySignalChan), v, nil)
+				if ps.osc != nil {
+					ps.osc.PoorSignal(v)
+				}
 			case neurosky.ATTENTION:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyAttentionChan), v, nil)
+				if ps.osc != nil {
+					ps.osc.Attention(v)
+				}
 			case neurosky.MEDITATION:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyMeditationChan), v, nil)
+				if ps.osc != nil {
+					ps.osc.Meditation(v)
+				}
 			case neurosky.EEG_POWER:
 				core.Bus().SendResponseMessage(fmt.Sprintf("%s/%s", v.Source, NeuroskyEEGPowerChan), v, nil)
+				if ps.osc != nil {
+					ps.osc.Any(v)
+				}
 			case neurosky.EEG_RAW:
 				ps.rawValues = append(ps.rawValues[1:], float64(v.EEGRawPower))
 				if count%100 == 0 {

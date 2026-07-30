@@ -26,3 +26,16 @@ hr {
   opacity: 0;
   transition: visibility 0s 500ms, opacity 500ms linear;
 }
+
+.chart-row {
+  display: flex;
+  align-items: center;
+}
+
+.hero-value {
+  font-size: 5rem;
+  font-weight: bold;
+  min-width: 120px;
+  text-align: center;
+  line-height: 1;
+}

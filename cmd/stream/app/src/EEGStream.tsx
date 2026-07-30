@@ -121,8 +121,7 @@ export class EEGStream extends BaseComponent<
           // });
           this.setState({
             currentTick: {
-              attention: 0,
-              meditation: 0,
+              ...this.state.currentTick,
               signalQuality: streamVal.signalQuality
             }
           })
@@ -135,6 +134,7 @@ export class EEGStream extends BaseComponent<
           }
           this.setState({
             attentionData: c,
+            currentTick: { ...this.state.currentTick, attention: streamVal.attention },
           });
         }
           break;
@@ -145,6 +145,7 @@ export class EEGStream extends BaseComponent<
           }
           this.setState({
             meditationData: c,
+            currentTick: { ...this.state.currentTick, meditation: streamVal.meditation },
           });
         }
           break;
@@ -245,9 +246,9 @@ export class EEGStream extends BaseComponent<
         <div cds-layout="col@sm:9">
           <RenderStreamState currentTick={this.state.currentTick} />
         </div>
-        <div cds-layout="col@sm:12">
+        <div cds-layout="col@sm:12" className="chart-row">
           <LineChart
-            width={1400}
+            width={1300}
             height={200}
             data={this.state.attentionData}
             margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
@@ -262,14 +263,13 @@ export class EEGStream extends BaseComponent<
             </YAxis>
             {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
-            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false} dot={false}>
-              {/* <LabelList dataKey="value" position="right" /> */}
-            </Line>
+            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false} dot={false} />
           </LineChart>
+          <div className="hero-value">{this.state.currentTick.attention}</div>
         </div>
-        <div cds-layout="col@sm:12">
+        <div cds-layout="col@sm:12" className="chart-row">
           <LineChart
-            width={1400}
+            width={1300}
             height={200}
             data={this.state.meditationData}
             margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
@@ -284,10 +284,9 @@ export class EEGStream extends BaseComponent<
             </YAxis>
             {/* <Tooltip /> */}
             <CartesianGrid stroke="#f5f5f5" />
-            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false} dot={false}>
-              {/* <LabelList dataKey="value" position="insideRight" /> */}
-            </Line>
+            <Line type="monotone" dataKey="value" stroke="#ff7300" yAxisId={0} isAnimationActive={false} dot={false} />
           </LineChart>
+          <div className="hero-value">{this.state.currentTick.meditation}</div>
         </div>
         <div cds-layout="col@sm:12">
           <LineChart
