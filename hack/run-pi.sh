@@ -24,5 +24,5 @@ fi
 
 echo "Starting mindlights stream server..."
 echo "  Config:  $CONFIG"
-echo "  Web UI:  http://$(hostname -I | awk '{print $1}'):30080/app"
-exec "$BINARY" stream --config "$CONFIG" --host 0.0.0.0 --spa-path "$APP_DIR"
+echo "  Web UI:  http://$(hostname -I | awk '{print $1}'):30080"
+exec "$BINARY" stream --config "$CONFIG" --host 0.0.0.0 --spa-path "$APP_DIR:/"

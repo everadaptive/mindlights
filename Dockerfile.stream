@@ -52,4 +52,4 @@ COPY --from=web-builder /app/build ./app
 
 EXPOSE 30080
 
-CMD ["./stream", "stream", "--config", "./config.yaml", "--host", "0.0.0.0", "--spa-path", "./app"]
+CMD ["./stream", "stream", "--config", "./config.yaml", "--host", "0.0.0.0", "--spa-path", "./app:/"]

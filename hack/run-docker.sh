@@ -17,7 +17,7 @@ if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
 fi
 
 echo "Starting mindlights ($IMAGE)..."
-echo "  Web UI: http://$(hostname -I | awk '{print $1}'):30080/app"
+echo "  Web UI: http://$(hostname -I | awk '{print $1}'):30080"
 
 exec docker run --rm \
   --net=host \
