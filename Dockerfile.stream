@@ -1,9 +1,11 @@
-FROM --platform=linux/amd64 golang:1.25-bookworm AS go-builder
+FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS go-builder
 
-RUN dpkg --add-architecture arm64 && apt-get update && apt-get install -y \
+ARG TARGETARCH
+
+RUN dpkg --add-architecture ${TARGETARCH} && apt-get update && apt-get install -y \
     gcc-aarch64-linux-gnu \
-    libusb-1.0-0-dev:arm64 \
-    libftdi1-dev:arm64 \
+    libusb-1.0-0-dev:${TARGETARCH} \
+    libftdi1-dev:${TARGETARCH} \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
@@ -12,13 +14,21 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig \
-    CGO_ENABLED=1 GOOS=linux GOARCH=arm64 \
-    CC=aarch64-linux-gnu-gcc \
-    go build -o /stream ./cmd/scan/
+
+RUN case "${TARGETARCH}" in \
+    arm64) \
+        PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig \
+        CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc \
+        go build -o /stream ./cmd/scan/ \
+        ;; \
+    amd64) \
+        CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
+        go build -o /stream ./cmd/scan/ \
+        ;; \
+    esac
 
 
-FROM --platform=linux/amd64 node:22-alpine AS web-builder
+FROM --platform=$BUILDPLATFORM node:22-alpine AS web-builder
 
 WORKDIR /app
 COPY cmd/stream/app/package.json cmd/stream/app/package-lock.json ./
@@ -28,7 +38,7 @@ COPY cmd/stream/app/ .
 RUN npm run build
 
 
-FROM --platform=linux/arm64 debian:bookworm-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     bluez \
