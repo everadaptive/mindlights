@@ -1,4 +1,4 @@
-display: udmx
+display: dummy
 display-size: 8
 udmx-pid: 0x0403
 udmx-vid: 0x6001
@@ -6,7 +6,7 @@ display-rgb-order: rgb
 display-master-brightness: 0
 display-first-rgb: 1
 visualization: "attention-light"
-osc-host: "192.168.2.180"
+osc-host: "192.168.2.20"
 osc-port: 3444
 
 eeg_headsets:

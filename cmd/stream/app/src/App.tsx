@@ -4,21 +4,30 @@ import "./styles.css";
 
 export interface AppState {
   connected: boolean;
+  currentTime: Date;
 }
 
 export default class App extends BaseComponent<any, AppState> {
-  // simple stream is broadcasting on this channel over at transport-bus.io
   private baseStreamChannel = "headset-02";
+  private clockInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(props?: any) {
     super(props);
     this.state = {
-      connected: false
+      connected: false,
+      currentTime: new Date(),
     };
   }
 
   componentDidMount() {
     this.connectBroker();
+    this.clockInterval = setInterval(() => {
+      this.setState({ currentTime: new Date() });
+    }, 1000);
+  }
+
+  componentWillUnmount() {
+    if (this.clockInterval) clearInterval(this.clockInterval);
   }
 
   connectBroker() {
@@ -50,7 +59,7 @@ export default class App extends BaseComponent<any, AppState> {
     return (
       <div className="main-container">
         <header>
-          <h1>Neurosky Events: {this.baseStreamChannel}</h1>
+          <h1>Neurosky Events: {this.baseStreamChannel} &nbsp; {this.state.currentTime.toLocaleTimeString()}</h1>
         </header>
         <hr />
         <EEGStream baseStreamChannel={this.baseStreamChannel} />

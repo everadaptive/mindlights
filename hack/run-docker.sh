@@ -23,4 +23,5 @@ exec docker run --rm \
   --net=host \
   --privileged \
   -v "$CONFIG":/mindlights/config.yaml:ro \
-  "$IMAGE"
+  "$IMAGE" \
+  ./stream stream --config ./config.yaml --host 0.0.0.0 --spa-path ./app:/
