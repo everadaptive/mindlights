@@ -5,6 +5,10 @@ export interface DataPoint {
     index: number;
     value: number;
     subject: string;
+    /** value as a percentile of this band's own distribution, 0-100 */
+    rank?: number;
+    /** band never moves in the reference recording (stuck sensor channel) */
+    dead?: boolean;
 }
 
 export interface ComplexValue {
@@ -60,9 +64,11 @@ export interface EEGStreamProps {
 
 export interface EEGStreamChannelProps {
     baseStreamChannel: string;
+    connected: boolean;
 }
 
 export interface ListenButtonProps {
     listening: boolean;
+    connected: boolean;
     fireListenHandler: MessageFunction<boolean>;
 }

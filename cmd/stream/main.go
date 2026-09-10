@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/everadaptive/mindlights/eeg/neurosky"
 	"github.com/everadaptive/mindlights/service"
@@ -21,6 +22,13 @@ var (
 	cfgFile     string
 	oscHost     string
 	oscPort     int
+	replayFile  string
+	replaySpeed float64
+	replayStart int
+	replayLimit int
+	serverHost  string
+	serverPort  int
+	spaPath     string
 	eegHeadsets []eegHeadsetConfig
 	log         *zap.SugaredLogger
 
@@ -42,23 +50,46 @@ var (
 			}
 			h := eegHeadsets[0]
 
-			ns, err := neurosky.NewNeurosky(h.BluetoothAddress, h.Name, log.Named(h.Name))
-			if err != nil {
-				log.Fatal(err)
+			var events chan neurosky.MindflexEvent
+
+			if replayFile != "" {
+				var err error
+				events, err = replayCSV(replayFile, h.Name, replaySpeed, time.Duration(replayStart)*time.Second, time.Duration(replayLimit)*time.Second, log.Named("replay"))
+				if err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				ns, err := neurosky.NewNeurosky(h.BluetoothAddress, h.Name, log.Named(h.Name))
+				if err != nil {
+					log.Fatal(err)
+				}
+				events = ns.Start()
+
+				signalChan := make(chan os.Signal, 1)
+				signal.Notify(signalChan, os.Interrupt)
+				go func() {
+					sig := <-signalChan
+					fmt.Printf("Got %s signal. Aborting...\n", sig)
+					ns.Close()
+				}()
 			}
-			events := ns.Start()
 
-			signalChan := make(chan os.Signal, 1)
-			signal.Notify(signalChan, os.Interrupt)
-			go func() {
-				sig := <-signalChan
-				fmt.Printf("Got %s signal. Aborting...\n", sig)
-				ns.Close()
-			}()
-
+			// plank's CreateServerConfig re-parses os.Args with pflag.ExitOnError,
+			// which would exit on our cobra flags; hide them to get a default config.
+			savedArgs := os.Args
+			os.Args = savedArgs[:1]
 			serverConfig, err := server.CreateServerConfig()
+			os.Args = savedArgs
 			if err != nil {
 				utils.Log.Fatalln(err)
+			}
+			serverConfig.Host = serverHost
+			serverConfig.Port = serverPort
+			if spaPath != "" {
+				serverConfig.SpaConfig, err = server.NewSpaConfig(spaPath)
+				if err != nil {
+					utils.Log.Fatalln(err)
+				}
 			}
 			platformServer := server.NewPlatformServer(serverConfig)
 			if err = platformServer.RegisterService(service.NewNeuroskyService(events, h.Name, oscHost, oscPort), service.NeuroskyServiceChan); err != nil {
@@ -78,6 +109,14 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "./mindlights.yaml", "config file")
 	rootCmd.PersistentFlags().StringVar(&oscHost, "osc-host", "", "OSC destination host (disabled if empty)")
 	rootCmd.PersistentFlags().IntVar(&oscPort, "osc-port", 9000, "OSC destination port")
+	rootCmd.PersistentFlags().StringVar(&replayFile, "replay", "", "replay a CSV log instead of connecting a headset")
+	rootCmd.PersistentFlags().Float64Var(&replaySpeed, "replay-speed", 1.0, "replay speed multiplier")
+	rootCmd.PersistentFlags().IntVar(&replayStart, "replay-start", 0, "skip the first N seconds of the replay")
+	rootCmd.PersistentFlags().IntVar(&replayLimit, "replay-limit", 0, "limit replay to the first N seconds (0 = all)")
+	rootCmd.PersistentFlags().BoolVar(&legacyBandShift, "legacy-band-shift", true, "CSV was recorded before the EEG_POWER parser offset fix; shift band columns to their true names")
+	rootCmd.PersistentFlags().StringVar(&serverHost, "host", "localhost", "host where the web UI is served")
+	rootCmd.PersistentFlags().IntVar(&serverPort, "port", 30080, "port where the web UI is served")
+	rootCmd.PersistentFlags().StringVar(&spaPath, "spa-path", "", `path to a built SPA to serve (URI derived from leaf dir; override with "path:/uri")`)
 }
 
 func initializeConfig(cmd *cobra.Command) error {

@@ -59,23 +59,33 @@ func (b *Neurosky) ParseMindflex(data []byte, events chan MindflexEvent) {
 					}
 					k = k + 1
 				case EEG_POWER:
+					// The band payload is packet-relative, like every other code
+					// above: n points at the length byte, so k=1 is the first
+					// payload byte. Indexing data[k:k+3] instead of
+					// data[n+k:n+k+3] read from the head of the buffer - delta
+					// picked up the [pad, 0x83, 0x18] header (a constant 33560)
+					// and every real band landed one slot late, with high gamma
+					// dropped entirely.
+					if n+k+3 > len(data) {
+						break
+					}
 					switch k {
 					case 1:
-						e.Delta = parse3ByteInteger(data[k : k+3])
+						e.Delta = parse3ByteInteger(data[n+k : n+k+3])
 					case 4:
-						e.Theta = parse3ByteInteger(data[k : k+3])
+						e.Theta = parse3ByteInteger(data[n+k : n+k+3])
 					case 7:
-						e.Low_Alpha = parse3ByteInteger(data[k : k+3])
+						e.Low_Alpha = parse3ByteInteger(data[n+k : n+k+3])
 					case 10:
-						e.High_Alpha = parse3ByteInteger(data[k : k+3])
+						e.High_Alpha = parse3ByteInteger(data[n+k : n+k+3])
 					case 13:
-						e.Low_Beta = parse3ByteInteger(data[k : k+3])
+						e.Low_Beta = parse3ByteInteger(data[n+k : n+k+3])
 					case 16:
-						e.High_Beta = parse3ByteInteger(data[k : k+3])
+						e.High_Beta = parse3ByteInteger(data[n+k : n+k+3])
 					case 19:
-						e.Low_Gamma = parse3ByteInteger(data[k : k+3])
+						e.Low_Gamma = parse3ByteInteger(data[n+k : n+k+3])
 					case 22:
-						e.High_Gamma = parse3ByteInteger(data[k : k+3])
+						e.High_Gamma = parse3ByteInteger(data[n+k : n+k+3])
 						b.log.Debugw("packet parsed", "source", b.name, "delta", e.Delta, "theta", e.Theta, "lowAlpha", e.Low_Alpha, "highAlpha", e.High_Alpha, "lowBeta", e.Low_Beta, "highBeta", e.High_Beta, "lowGamma", e.Low_Gamma, "highGamma", e.High_Gamma)
 						events <- MindflexEvent{
 							Type:     EEG_POWER,

@@ -39,3 +39,10 @@ hr {
   text-align: center;
   line-height: 1;
 }
+
+.band-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}

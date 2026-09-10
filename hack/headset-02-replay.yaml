@@ -1,0 +1,5 @@
+# Replay-only config: bluetoothAddress is unused in --replay mode,
+# the name must match the channel the web UI subscribes to (headset-02).
+eeg_headsets:
+  - name: headset-02
+    bluetoothAddress: "98:D3:31:80:7B:67"

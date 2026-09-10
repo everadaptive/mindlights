@@ -62,7 +62,7 @@ export default class App extends BaseComponent<any, AppState> {
           <h1>Neurosky Events: {this.baseStreamChannel} &nbsp; {this.state.currentTime.toLocaleTimeString()}</h1>
         </header>
         <hr />
-        <EEGStream baseStreamChannel={this.baseStreamChannel} />
+        <EEGStream baseStreamChannel={this.baseStreamChannel} connected={this.state.connected} />
       </div>
     );
   }
